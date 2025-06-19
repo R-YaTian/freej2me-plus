@@ -84,7 +84,7 @@ public class Display
 			@Override
 			public void run() 
 			{
-				inputEvents.add(r);
+				synchronized(inputEvents) { inputEvents.add(r); }
 				synchronized (serializedEvents) 
 				{
 					if(serializedEvents.isEmpty()) { serializedEvents.notify(); }
@@ -122,10 +122,13 @@ public class Display
 			}
 
 			// Process all pending inputs added since the previous thread loop, after any previously pending events were processed.
-			while(!inputEvents.isEmpty()) 
+			synchronized(inputEvents) 
 			{ 
-				call = inputEvents.poll();
-				if(call != null) { call.run(); }
+				while(!inputEvents.isEmpty()) 
+				{ 
+					call = inputEvents.poll();
+					if(call != null) { call.run(); }
+				}
 			}
 		}
 	}
