@@ -392,6 +392,8 @@ public class FreeJ2ME
 
 		if(args.length<1)
 		{
+			Mobile.config.init();
+			settingsChanged();
 			while(!awtGUI.hasLoadedFile())
 			{
 				try{ Thread.sleep(1000); }

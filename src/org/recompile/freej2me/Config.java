@@ -102,7 +102,15 @@ public class Config
 
 	public void init()
 	{
-		String appname = Mobile.getPlatform().loader.suitename;
+		String appname;
+		try
+		{
+			appname = Mobile.getPlatform().loader.suitename;
+		}
+		catch (Exception e)
+		{
+			appname = "global";
+		}
 		configPath = Mobile.getPlatform().dataPath + "./config/"+appname;
 		configFile = configPath + "/game.conf";
 		// Load Config //

@@ -21,10 +21,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.management.ManagementFactory;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.util.Arrays;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -951,15 +951,26 @@ public class Mobile
 			String classPath = System.getProperty("java.class.path");
 
 			// Get the main class name
-			String mainClass = getMainClassFromJar("file:" + classPath);
+			// String mainClass = getMainClassFromJar("file:" + classPath);
 
-			String jarPath = platform.fileName.replace("file:", "");
-
-			jarPath = URLDecoder.decode(jarPath, textEncoding);
+			String jarPath = "";
+			if (platform.fileName != null && !platform.fileName.isEmpty()) {
+				jarPath = URLDecoder.decode(platform.fileName.replace("file:", ""), textEncoding);
+			}
 
 			if(!MobilePlatform.isLibretro)
 			{
-				String[] commands = new String[] { java, "-jar", "-Dfile.encoding=GBK", classPath, jarPath};
+				List<String> commandList = new ArrayList<>();
+				commandList.add(java);
+				commandList.add("-jar");
+				commandList.add("-Dfile.encoding=GBK");
+				commandList.add(classPath);
+
+				if (jarPath != null && !jarPath.isEmpty()) {
+					commandList.add(jarPath);
+				}
+
+				String[] commands = commandList.toArray(new String[0]);
 
 				ProcessBuilder processBuilder = new ProcessBuilder(commands);
 				processBuilder.start();
