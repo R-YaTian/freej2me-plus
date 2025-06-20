@@ -23,6 +23,7 @@
 
     <echo message="Building FreeJ2ME - AWT | Libretro | SDL" />
 	<javac
+		debug="true"
 		srcdir="src"
 		destdir="build/classes"
 		classpathref="classpath"

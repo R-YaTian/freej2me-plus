@@ -959,7 +959,7 @@ public class Mobile
 
 			if(!MobilePlatform.isLibretro)
 			{
-				String[] commands = new String[] { java, "-jar", "-Dfile.encoding="+textEncoding, classPath, jarPath};
+				String[] commands = new String[] { java, "-jar", "-Dfile.encoding=GBK", classPath, jarPath};
 
 				ProcessBuilder processBuilder = new ProcessBuilder(commands);
 				processBuilder.start();

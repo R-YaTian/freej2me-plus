@@ -244,7 +244,7 @@ public class FreeJ2ME
             String java = System.getProperty("java.home") + "/bin/java";
             String classPath = System.getProperty("java.class.path");
 
-            String[] commands = new String[] { java, "-Dfile.encoding="+Mobile.textEncoding, "-cp", classPath, FreeJ2ME.class.getName() };
+            String[] commands = new String[] { java, "-Dfile.encoding="+System.getProperty("file.encoding"), "-cp", classPath, FreeJ2ME.class.getName() };
 
             // Start a new instance
             ProcessBuilder processBuilder = new ProcessBuilder(commands);
@@ -728,7 +728,7 @@ public class FreeJ2ME
 					g.fillRect(0, 0, getWidth(), getHeight());
 					g.setFont(new Font("Dialog", Font.BOLD, cw/5));
 					g.setColor(Color.ORANGE);
-					String message = "PAUSED!";
+					String message = "已暂停!";
 					FontMetrics metrics = g.getFontMetrics();
 					int x = (getWidth() - metrics.stringWidth(message)) / 2;
 					int y = (getHeight() + metrics.getAscent()) / 2;
@@ -751,7 +751,7 @@ public class FreeJ2ME
 				g.fillRect(cx, cy, cw, ch);
 				g.setFont(new Font("Dialog", Font.BOLD, 20));
 				g.setColor(fileSupported ? Color.ORANGE : Color.RED);
-				String message = fileSupported ? ">> DROP HERE <<" : "INVALID FILE TYPE!!!";
+				String message = fileSupported ? ">> 拖放到此 <<" : "无效文件类型!";
 				FontMetrics metrics = g.getFontMetrics();
 				int x = (getWidth() - metrics.stringWidth(message)) / 2;
 				int y = (getHeight() / 2);
