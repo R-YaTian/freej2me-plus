@@ -50,17 +50,17 @@ public class Image extends PlatformImage
 	public static Image createImage(byte[] imageData, int imageOffset, int imageLength) throws IllegalArgumentException
 	{
 		Mobile.log(Mobile.LOG_DEBUG, Image.class.getPackage().getName() + "." + Image.class.getSimpleName() + ": " + "Create Image from image data ");
-		if (imageData == null) {throw new NullPointerException();}
-		if (imageOffset + imageLength > imageData.length) {throw new ArrayIndexOutOfBoundsException();}
+		if (imageData == null) { throw new NullPointerException("Image data cannot be null"); }
+		if (imageOffset + imageLength > imageData.length) { throw new ArrayIndexOutOfBoundsException("Access range goes out of Image data's bounds"); }
 
 		return new Image(imageData, imageOffset, imageLength, false);
 	}
 
 	public static Image createImage(byte[] imageData, int imageOffset, int imageLength, boolean mutable) throws IllegalArgumentException
 	{
-		Mobile.log(Mobile.LOG_DEBUG, Image.class.getPackage().getName() + "." + Image.class.getSimpleName() + ": " + "Create Image from image data ");
-		if (imageData == null) {throw new NullPointerException();}
-		if (imageOffset + imageLength > imageData.length) {throw new ArrayIndexOutOfBoundsException();}
+		Mobile.log(Mobile.LOG_DEBUG, Image.class.getPackage().getName() + "." + Image.class.getSimpleName() + ": " + "Create Image from image data with mutable flag ");
+		if (imageData == null) { throw new NullPointerException("Image data cannot be null"); }
+		if (imageOffset + imageLength > imageData.length) { throw new ArrayIndexOutOfBoundsException("Access range goes out of Image data's bounds"); }
 
 		return new Image(imageData, imageOffset, imageLength, mutable);
 	}
@@ -79,9 +79,9 @@ public class Image extends PlatformImage
 	public static Image createImage(Image img, int x, int y, int width, int height, int transform)
 	{
 		Mobile.log(Mobile.LOG_DEBUG, Image.class.getPackage().getName() + "." + Image.class.getSimpleName() + ": " + "Create Image from sub-image " + " img_w:" + img.getWidth() + " img_h:" + img.getHeight() + " x:" + x + " y:" + y + " width:" + width + " height:" + height + " trans:" + transform);
-		if (img == null) { throw new NullPointerException(); }
-		if (x+width > img.getWidth() || y+height > img.getHeight()) {throw new IllegalArgumentException();}
-		if (width <= 0 || height <= 0) {throw new IllegalArgumentException();}
+		if (img == null) { throw new NullPointerException("Source image cannot be null"); }
+		if (x+width > img.getWidth() || y+height > img.getHeight()) { throw new IllegalArgumentException("Access range goes out of Image data's bounds"); }
+		if (width <= 0 || height <= 0) { throw new IllegalArgumentException("Invalid width or height value for image"); }
 
 		return new Image(img, x, y, width, height, transform);
 	}
@@ -89,14 +89,14 @@ public class Image extends PlatformImage
 	public static Image createImage(InputStream stream) throws IOException, IllegalArgumentException
 	{
 		Mobile.log(Mobile.LOG_DEBUG, Image.class.getPackage().getName() + "." + Image.class.getSimpleName() + ": " + "Create Image stream");
-		if (stream == null) {throw new NullPointerException();}
+		if (stream == null) { throw new NullPointerException("Image stream cannot be null"); }
 		return new Image(stream);
 	}
 
 	public static Image createImage(int width, int height)
 	{
 		Mobile.log(Mobile.LOG_DEBUG, Image.class.getPackage().getName() + "." + Image.class.getSimpleName() + ": " + "Create Image w,h " + width + ", " + height);
-		if (width <= 0 || height <= 0) {throw new IllegalArgumentException();}
+		if (width <= 0 || height <= 0) { throw new IllegalArgumentException("Invalid width or height value for image"); }
 
 		return new Image(width, height);
 	}
@@ -104,7 +104,7 @@ public class Image extends PlatformImage
 	public static Image createImage(int width, int height, int ARGBcolor)
 	{
 		Mobile.log(Mobile.LOG_DEBUG, Image.class.getPackage().getName() + "." + Image.class.getSimpleName() + ": " + "Create Image w,h,color " + width + ", " + height  + ", " + ARGBcolor);
-		if (width <= 0 || height <= 0) {throw new IllegalArgumentException();}
+		if (width <= 0 || height <= 0) { throw new IllegalArgumentException("Invalid width or height value for image"); }
 
 		return new Image(width, height, ARGBcolor);
 	}
@@ -112,16 +112,16 @@ public class Image extends PlatformImage
 	public static Image createImage(String name) throws IOException
 	{
 		Mobile.log(Mobile.LOG_DEBUG, Image.class.getPackage().getName() + "." + Image.class.getSimpleName() + ": " + "Create Image " + name);
-		if (name == null) {throw new NullPointerException();}
+		if (name == null) { throw new NullPointerException("Image name cannot be null"); }
 		return new Image(name);
 	}
 
 	public static Image createRGBImage(int[] rgb, int width, int height, boolean processAlpha)
 	{
 		Mobile.log(Mobile.LOG_DEBUG, Image.class.getPackage().getName() + "." + Image.class.getSimpleName() + ": " + "Create Image RGB " + width + ", " + height);
-		if (rgb == null) {throw new NullPointerException();}
-		if (width <= 0 || height <= 0) {throw new IllegalArgumentException();}
-		if (rgb.length < width * height) {throw new ArrayIndexOutOfBoundsException();}
+		if (rgb == null) { throw new NullPointerException("RGB array cannot be null"); }
+		if (width <= 0 || height <= 0) { throw new IllegalArgumentException("Invalid width or height value for image"); }
+		if (width * height > rgb.length) { throw new ArrayIndexOutOfBoundsException("Access range goes out of Image data's bounds"); }
 		return new Image(rgb, width, height, processAlpha);
 	}
 

@@ -20,9 +20,8 @@ import org.recompile.mobile.Mobile;
 import org.recompile.mobile.MobilePlatform;
 
 import io.github.libsdl4j.api.event.SDL_Event;
-import io.github.libsdl4j.api.render.SDL_Renderer;
+import io.github.libsdl4j.api.surface.SDL_Surface;
 import io.github.libsdl4j.api.video.SDL_Window;
-import io.github.libsdl4j.api.render.SDL_Texture;
 import io.github.libsdl4j.api.joystick.SDL_Joystick;
 import io.github.libsdl4j.api.joystick.SDL_JoystickID;
 
@@ -30,19 +29,15 @@ import static io.github.libsdl4j.api.Sdl.SDL_Init;
 import static io.github.libsdl4j.api.SdlSubSystemConst.SDL_INIT_JOYSTICK;
 import static io.github.libsdl4j.api.SdlSubSystemConst.SDL_INIT_VIDEO;
 
-import static io.github.libsdl4j.api.render.SdlRender.SDL_CreateRenderer;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderClear;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderPresent;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderCopy;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_UpdateTexture;
-import static io.github.libsdl4j.api.render.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_CreateTexture;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_DestroyRenderer;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_DestroyTexture;
+import static io.github.libsdl4j.api.surface.SdlSurface.SDL_BlitScaled;
+import static io.github.libsdl4j.api.surface.SdlSurface.SDL_CreateRGBSurface;
+import static io.github.libsdl4j.api.surface.SdlSurface.SDL_FreeSurface;
 
 import static io.github.libsdl4j.api.video.SdlVideo.SDL_SetWindowSize;
 import static io.github.libsdl4j.api.video.SdlVideo.SDL_SetWindowFullscreen;
 import static io.github.libsdl4j.api.video.SdlVideo.SDL_CreateWindow;
+import static io.github.libsdl4j.api.video.SdlVideo.SDL_GetWindowSurface;
+import static io.github.libsdl4j.api.video.SdlVideo.SDL_UpdateWindowSurface;
 import static io.github.libsdl4j.api.video.SdlVideoConst.SDL_WINDOWPOS_CENTERED;
 import static io.github.libsdl4j.api.video.SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP;
 import static io.github.libsdl4j.api.video.SDL_WindowFlags.SDL_WINDOW_SHOWN;
@@ -90,7 +85,9 @@ import java.util.TimerTask;
 
 import javax.microedition.media.Manager;
 
-import com.sun.jna.Memory;
+import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.ptr.PointerByReference;
 
 public class Anbu
 {
@@ -155,8 +152,9 @@ public class Anbu
 		// Set painter right before the jar is loaded
 		Mobile.getPlatform().setPainter(new Runnable()
 		{
-			public void run()
+			public synchronized void run()
 			{
+				if(!SDLInitialized) { return; } // Don't do anything while SDL isn't initialized
 				try
 				{
 					/* Check if vibration commands have to be handled */
@@ -186,17 +184,15 @@ public class Anbu
 				Mobile.config.settings.put("height", ""+lcdHeight);
 			}
 
-			// Start SDL
-			sdl = new SDL();
-
 			Mobile.config.saveConfig();
 			settingsChanged();
-			
-			sdl.start(args);
 
 			// Run jar
 			Mobile.getPlatform().runJar();
 
+			// Start SDL
+			sdl = new SDL();
+			sdl.start(args);
 		}
 		else
 		{
@@ -222,11 +218,9 @@ public class Anbu
 
 	private class SDL
 	{	
-		protected SDL_Renderer renderer;
 		protected SDL_Window window;
-		protected SDL_Texture texture;
-
-		protected Memory pixels;
+		protected SDL_Surface surface;
+		protected SDL_Surface lcdSurface;
 
 		private int mouseX;
 		private int mouseY;
@@ -239,31 +233,23 @@ public class Anbu
 		private Timer keytimer;
 		private TimerTask keytask;
 
-		public void start(String args[])
+		public synchronized void start(String args[])
 		{
-			if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0 )
+			if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
 			{
 				Mobile.log(Mobile.LOG_ERROR, Anbu.class.getPackage().getName() + "." + Anbu.class.getSimpleName() + ": " + "Unable to initialize SDL");
 				stop();
 			}
 
 			window = SDL_CreateWindow("FreeJ2ME-Plus - SDL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, lcdWidth*scaleFactor, lcdHeight*scaleFactor, SDL_WINDOW_SHOWN);
-			
-			// Create a renderer, and a texture where drawing can take place, streaming for constant updates.
-			renderer = SDL_CreateRenderer(window, -1, 0);
-			texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_STREAMING, lcdWidth, lcdHeight);
-			pixels = new Memory(lcdWidth * lcdHeight * 4);
-
 			SDL_JoystickEventState(SDL_ENABLE);
 
+			lcdSurface = SDL_CreateRGBSurface(0, lcdWidth, lcdHeight, 32, 0, 0, 0, 0);
+			
 			SDLInitialized = true;
 		}
 
-		public void stop()
-		{
-			SDL_DestroyTexture(texture);
-			System.exit(0);
-		}
+		public void stop() { System.exit(0); }
 
 		public void paint()
 		{
@@ -271,18 +257,18 @@ public class Anbu
 			 * Let's make resolution changes and adjust any relevant objects here, as it's right on the render path 
 			 * and it makes sure that the objects will be set correctly before being rendered.
 			 */
-			if(resolutionChanged || Mobile.displayUpdated) { updateScreen(); }
+			if(resolutionChanged) { updateScreen(); }
 
-			/* 
-			 * Like on libretro, access the image's DataBuffer directly instead of using BufferedImage's getRGB() method,
-			 * which is slower.
-			 */
-            pixels.write(0, lcdData, 0, lcdData.length);
+			// Scale the surface to the windows' size, and blit directly to it. Using a renderer should be faster, but using it incurs a heavy penalty here somehow
+			surface = SDL_GetWindowSurface(window);
+			if (surface != null) 
+			{	
+				lcdSurface.getPixels().write(0, lcdData, 0, lcdData.length);
 
-			//SDL_RenderClear(renderer); // We don't need RenderClear since we always repaint the whole screen.
-			SDL_UpdateTexture(texture, null, pixels, lcdWidth * 4);
-			SDL_RenderCopy(renderer, texture, null, null);
-			SDL_RenderPresent(renderer);
+				SDL_BlitScaled(lcdSurface, null, surface, null);
+				
+				SDL_UpdateWindowSurface(window);
+			}
 
 			/* 
 			 * Normally, input reading should not be tied to the render logic, because that would softlock jars that only
@@ -317,12 +303,12 @@ public class Anbu
 						//if(event.type == SDL_KEYDOWN) { Screenshot.takeScreenshot = true; }
 						continue;
 					}
-					else if (key == SDLK_F11) 
+					else if (key == SDLK_F11) // TODO: Doesn't respect aspect ratio
 					{
 						if(event.type == SDL_KEYDOWN) 
 						{
-							isFullscreen = !isFullscreen;
-							toggleFullscreen();
+							//isFullscreen = !isFullscreen;
+							//toggleFullscreen();
 						}
 						continue;
 					}
@@ -617,15 +603,12 @@ public class Anbu
 		 * Whenever FreeJ2ME updates its current displayable, or the user resizes the screen, this must be called to
 		 * to update the renderer and make sure SDL will render to the new window size correctly.
 		 */
-		private void updateScreen() 
+		private synchronized void updateScreen() 
 		{
-			SDL_SetWindowSize(window, lcdWidth*scaleFactor , lcdHeight*scaleFactor);
-			SDL_DestroyRenderer(renderer);
-			renderer = SDL_CreateRenderer(window, -1, 0);
-			texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_STREAMING, lcdWidth, lcdHeight);
-			pixels = new Memory(lcdWidth * lcdHeight * 4); 
+			SDL_SetWindowSize(window, lcdWidth*scaleFactor, lcdHeight*scaleFactor);
+			SDL_FreeSurface(lcdSurface);
+			lcdSurface = SDL_CreateRGBSurface(0, lcdWidth, lcdHeight, 32, 0, 0, 0, 0);
 			resolutionChanged = false;
-			Mobile.displayUpdated = false;
 		}
 
 	} // sdl

@@ -270,7 +270,6 @@ public class Display
 					Mobile.log(Mobile.LOG_ERROR, Display.class.getPackage().getName() + "." + Display.class.getSimpleName() + ": " + "Problem with setCurrent(next)");
 					e.printStackTrace();
 				}
-				finally { Mobile.displayUpdated = true; }
 			}
 		});
 		synchronized(serializedEvents) { serializedEvents.notify(); }
@@ -300,7 +299,6 @@ public class Display
 					Mobile.log(Mobile.LOG_ERROR, Display.class.getPackage().getName() + "." + Display.class.getSimpleName() + ": " + "Problem with setCurrent(alert, next)");
 					e.printStackTrace();
 				}
-				finally { Mobile.displayUpdated = true; }
 			}
 		});
 		synchronized(serializedEvents) { serializedEvents.notify(); }

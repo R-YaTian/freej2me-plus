@@ -182,9 +182,6 @@ public class Mobile
 	// Vodafone has a use for this, but maybe this can be made into an actual viewport AA toggle
 	public static boolean isAAEnabled = false;
 
-	// Var to track any changes to current Displayable, otherwise the SDL interface won't render new frames
-	public static boolean displayUpdated;
-
 	// Vibration support for Libretro and SDL
 	public static int vibrationDuration = 0;
 	public static int vibrationStrength = 0xFFFF;

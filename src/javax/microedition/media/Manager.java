@@ -75,7 +75,7 @@ public class Manager
 			dedicatedSynth.open();
 			defaultSoundbank = dedicatedSynth.getDefaultSoundbank();
 
-			checkCustomMidi();
+			changeCustomMidi();
 
 			dedicatedReceiver = dedicatedSynth.getReceiver();
 			channels = dedicatedSynth.getChannels();
