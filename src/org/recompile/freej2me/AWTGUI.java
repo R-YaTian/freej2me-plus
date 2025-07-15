@@ -50,7 +50,7 @@ import org.recompile.mobile.MobilePlatform;
 
 public final class AWTGUI 
 {
-	final String VERSION = "1.48";
+	final String VERSION = "1.48c";
 	/* This is used to indicate to FreeJ2ME that it has to call "settingsChanged()" to apply changes made here */
 	private boolean hasPendingChange;
 
@@ -71,47 +71,46 @@ public final class AWTGUI
 	final MenuBar menuBar = new MenuBar();
 
 	/* MenuBar's menus */
-	final Menu fileMenu = new Menu("File");
-	final Menu optionMenu = new Menu("Settings");
-	final Menu speedHackMenu = new Menu("SpeedHacks"); 
-	final Menu compatSettingsMenu = new Menu("Compatibility Settings"); 
-	final Menu debugMenu = new Menu("Debug");
+	final Menu fileMenu = new Menu("文件");
+	final Menu optionMenu = new Menu("设置");
+	final Menu speedHackMenu = new Menu("速度修改"); 
+	final Menu compatSettingsMenu = new Menu("兼容性设置"); 
+	final Menu debugMenu = new Menu("调试");
 
 	/* Sub menus (for now, all of them are located in "Settings") */
-	final Menu fpsCap = new Menu("FPS Limit");
-	final Menu unlockFPSHack = new Menu("Unlock FPS Hack");
-	final Menu showFPS = new Menu("Show FPS Counter");
-	final Menu phoneType = new Menu("Phone Key Layout");
-	final Menu backlightColor = new Menu("Backlight Color");
-	final Menu fontOffset = new Menu("Font Size Offset");
+	final Menu fpsCap = new Menu("FPS 限制");
+	final Menu unlockFPSHack = new Menu("解锁 FPS 补丁");
+	final Menu showFPS = new Menu("显示 FPS");
+	final Menu phoneType = new Menu("手机键盘布局");
+	final Menu backlightColor = new Menu("背光颜色");
+	final Menu fontOffset = new Menu("字体大小偏移");
 
 	/* Dialogs for resolution changes, restart notifications, MemStats and info about FreeJ2ME */
 	final Dialog[] awtDialogs = 
 	{
-		new Dialog(main , "Set LCD Resolution", true),
-		new Dialog(main , "About FreeJ2ME", true),
-		new Dialog(main, "FreeJ2ME MemStat", false),
-		new Dialog(main, "Restart Required", true),
-		new Dialog(main, "Key Mapping", true),
+		new Dialog(main , "设置 LCD 分辨率", true),
+		new Dialog(main , "关于 FreeJ2ME", true),
+		new Dialog(main, "内存监视器", false),
+		new Dialog(main, "需要重启以应用设置", true),
+		new Dialog(main, "按键设置", true),
 	};
-	
+
 	final Button[] awtButtons = 
 	{
-		new Button("Close"),
-		new Button("Apply"),
-		new Button("Cancel"),
-		new Button("Restart Now"),
-		new Button("Restart later"),
-		new Button("Apply Inputs"),
-		new Button("Cancel")
+		new Button("关闭"),
+		new Button("应用"),
+		new Button("取消"),
+		new Button("立即重启"),
+		new Button("稍后重启"),
+		new Button("应用按键设置"),
+		new Button("取消")
 	};
-	
 
 	/* Log Level submenu */
-	final Menu logLevel = new Menu("Log Level");
+	final Menu logLevel = new Menu("日志等级");
 
 	/* M3G Debug submenu */
-	final Menu M3GDebug = new Menu("M3G Debugging");
+	final Menu M3GDebug = new Menu("M3G 调试");
 
 	/* Input mapping keys */
 	final Button inputButtons[] = new Button[] 
@@ -130,7 +129,7 @@ public final class AWTGUI
 		new Button("NumPad-5"),
 		new Button("NumPad-6"),
 		new Button("NumPad-1"),
-		new Button("NumPad=2"),
+		new Button("NumPad-2"),
 		new Button("NumPad-3"),
 		new Button("E"),
 		new Button("NumPad-0"),
@@ -154,61 +153,61 @@ public final class AWTGUI
 
 	final Choice resChoice = new Choice();
 
-	Label totalMemLabel = new Label("Total Mem: 000000000 KB");
-	Label freeMemLabel = new Label("Free Mem : 000000000 KB");
-	Label usedMemLabel = new Label("Used Mem : 000000000 KB");
-	Label maxMemLabel = new Label("Max Mem  : 000000000 KB");
+	Label totalMemLabel = new Label("总内存: 000000000 KB");
+	Label freeMemLabel = new Label("空闲内存 : 000000000 KB");
+	Label usedMemLabel = new Label("已用内存 : 000000000 KB");
+	Label maxMemLabel = new Label("最大内存 : 000000000 KB");
 
 	/* Items for each of the bar's menus */
 	final UIListener menuItemListener = new UIListener();
 
-	final MenuItem aboutMenuItem = new MenuItem("About FreeJ2ME");
-	final MenuItem resChangeMenuItem = new MenuItem("Change Phone Resolution");
+	final MenuItem aboutMenuItem = new MenuItem("关于 FreeJ2ME");
+	final MenuItem resChangeMenuItem = new MenuItem("更改手机分辨率");
 
-	final MenuItem openMenuItem = new MenuItem("Open JAR / JAD / KJX File");
-	final MenuItem restartMenuItem = new MenuItem("Restart Running Jar");
-	final MenuItem closeMenuItem = new MenuItem("Close Running Jar");
-	final MenuItem scrShot = new MenuItem("Take Screenshot (Ctrl+Alt+C)");
-	final MenuItem pauseRes = new MenuItem("Pause / Resume (Ctrl+Alt+X)");
-	final MenuItem exitMenuItem = new MenuItem("Exit FreeJ2ME");
-	final MenuItem mapInputs = new MenuItem("Manage Inputs");
+	final MenuItem openMenuItem = new MenuItem("打开 JAR / JAD / KJX 文件");
+	final MenuItem restartMenuItem = new MenuItem("重启正在运行的 Jar");
+	final MenuItem closeMenuItem = new MenuItem("关闭正在运行的 Jar");
+	final MenuItem scrShot = new MenuItem("截屏 (Ctrl+Alt+C)");
+	final MenuItem pauseRes = new MenuItem("暂停 / 恢复 (Ctrl+Alt+X)");
+	final MenuItem exitMenuItem = new MenuItem("退出 FreeJ2ME");
+	final MenuItem mapInputs = new MenuItem("按键设置");
 
-	final MenuItem showPlayer = new MenuItem("J2ME Media Player");
+	final MenuItem showPlayer = new MenuItem("J2ME 媒体播放器");
 
-	final CheckboxMenuItem fullScreen = new CheckboxMenuItem("Toggle Fullscreen (Ctrl+Alt+F)");
-	final CheckboxMenuItem enableRotation = new CheckboxMenuItem("Rotate Screen (Ctrl+Alt+R)", false);
-	final CheckboxMenuItem enableAudio = new CheckboxMenuItem("Enable Audio", false);
-	final CheckboxMenuItem useCustomMidi = new CheckboxMenuItem("Use custom midi soundfont", false);
-	final CheckboxMenuItem useCustomFont = new CheckboxMenuItem("Use custom text font", false);
+	final CheckboxMenuItem fullScreen = new CheckboxMenuItem("切换全屏 (Ctrl+Alt+F)");
+	final CheckboxMenuItem enableRotation = new CheckboxMenuItem("旋转屏幕 (Ctrl+Alt+R)", false);
+	final CheckboxMenuItem enableAudio = new CheckboxMenuItem("启用音频", false);
+	final CheckboxMenuItem useCustomMidi = new CheckboxMenuItem("使用自定义的 midi soundfont", false);
+	final CheckboxMenuItem useCustomFont = new CheckboxMenuItem("使用自定义的文本字体", false);
 
 	final CheckboxMenuItem[] layoutOptions = 
 	{
-		new CheckboxMenuItem("Default", true),
+		new CheckboxMenuItem("默认", true),
 		new CheckboxMenuItem("LG", false),
-		new CheckboxMenuItem("Motorola/SoftBank", false),
-		new CheckboxMenuItem("Motorola V8", false),
-		new CheckboxMenuItem("Motorola Triplets", false),
-		new CheckboxMenuItem("Nokia Full Keyboard", false),
-		new CheckboxMenuItem("Sagem", false),
-		new CheckboxMenuItem("Siemens", false),
-		new CheckboxMenuItem("Sharp", false)
+		new CheckboxMenuItem("摩托罗拉/软银", false),
+		new CheckboxMenuItem("摩托罗拉 V8", false),
+		new CheckboxMenuItem("摩托罗拉 Triplets", false),
+		new CheckboxMenuItem("诺基亚全键盘", false),
+		new CheckboxMenuItem("萨基姆", false),
+		new CheckboxMenuItem("西门子", false),
+		new CheckboxMenuItem("夏普", false)
 	};
 	final String[] layoutValues = {"Standard", "LG", "Motorola", "MotoV8", "MotoTriplets", "NokiaKeyboard", "Sagem", "Siemens", "Sharp"};
 	
 	final CheckboxMenuItem[] backlightOptions = 
 	{
-		new CheckboxMenuItem("White/Disabled", false),
-		new CheckboxMenuItem("Green", true),
-		new CheckboxMenuItem("Cyan", false),
-		new CheckboxMenuItem("Orange", false),
-		new CheckboxMenuItem("Violet", false),
-		new CheckboxMenuItem("Red", false)
+		new CheckboxMenuItem("白/禁用", false),
+		new CheckboxMenuItem("绿", true),
+		new CheckboxMenuItem("青", false),
+		new CheckboxMenuItem("橙", false),
+		new CheckboxMenuItem("紫", false),
+		new CheckboxMenuItem("红", false)
 	};
 	final String[] backlightValues = {"Disabled", "Green", "Cyan", "Orange", "Violet", "Red"};
 
 	final CheckboxMenuItem[] fpsOptions = 
 	{
-		new CheckboxMenuItem("No Limit", true),
+		new CheckboxMenuItem("无限制", true),
 		new CheckboxMenuItem("60 FPS", false),
 		new CheckboxMenuItem("55 FPS", false),
 		new CheckboxMenuItem("50 FPS", false),
@@ -225,20 +224,20 @@ public final class AWTGUI
 
 	final CheckboxMenuItem[] fpsHackOptions = 
 	{
-		new CheckboxMenuItem("Disabled", true),
-		new CheckboxMenuItem("Safe", false),
-		new CheckboxMenuItem("Extended", false),
-		new CheckboxMenuItem("Aggressive", false)
+		new CheckboxMenuItem("禁用", true),
+		new CheckboxMenuItem("安全", false),
+		new CheckboxMenuItem("扩展", false),
+		new CheckboxMenuItem("激进", false)
 	};
 	final String[] fpsHackValues = {"Disabled", "Safe", "Extended", "Aggressive"};
 
 	final CheckboxMenuItem[] fpsCounterPos = 
 	{
-		new CheckboxMenuItem("Off", true),
-		new CheckboxMenuItem("Top Left", false),
-		new CheckboxMenuItem("Top Right", false),
-		new CheckboxMenuItem("Bottom Left", false),
-		new CheckboxMenuItem("Bottom Right", false)
+		new CheckboxMenuItem("关", true),
+		new CheckboxMenuItem("左上角", false),
+		new CheckboxMenuItem("右上角", false),
+		new CheckboxMenuItem("左下角", false),
+		new CheckboxMenuItem("右下角", false)
 	};
 	final String[] showFPSValues = {"Off", "TopLeft", "TopRight", "BottomLeft", "BottomRight"};
 
@@ -248,7 +247,7 @@ public final class AWTGUI
 		new CheckboxMenuItem("-3pt", false),
 		new CheckboxMenuItem("-2pt", false),
 		new CheckboxMenuItem("-1pt", false),
-		new CheckboxMenuItem(" 0pt (Default)", true),
+		new CheckboxMenuItem(" 0pt (默认)", true),
 		new CheckboxMenuItem(" 1pt", false),
 		new CheckboxMenuItem(" 2pt", false),
 		new CheckboxMenuItem(" 3pt", false),
@@ -258,33 +257,33 @@ public final class AWTGUI
 
 	final CheckboxMenuItem[] logLevels = 
 	{
-		new CheckboxMenuItem("Disabled", false),
-		new CheckboxMenuItem("Debug", false),
-		new CheckboxMenuItem("Info", false),
-		new CheckboxMenuItem("Warning", false),
-		new CheckboxMenuItem("Error", false)
+		new CheckboxMenuItem("禁用", false),
+		new CheckboxMenuItem("调试", false),
+		new CheckboxMenuItem("信息", false),
+		new CheckboxMenuItem("警告", false),
+		new CheckboxMenuItem("错误", false)
 	};
 	final String[] logLevelValues = {"0", "1", "2", "3", "4"};
 
 	// Speedhacks
-	final CheckboxMenuItem noAlphaOnBlankImages = new CheckboxMenuItem("No alpha on blank images");
+	final CheckboxMenuItem noAlphaOnBlankImages = new CheckboxMenuItem("空白图像无 alpha");
 	
 	// Compatibility settings
-	final CheckboxMenuItem doNotTranslateDrawRGB = new CheckboxMenuItem("Don't translate DrawRGB calls");
-	final CheckboxMenuItem transToOriginOnReset = new CheckboxMenuItem("Translate to origin on gfx reset");
-	final CheckboxMenuItem immediateRepaints = new CheckboxMenuItem("Process canvas repaints immediately");
-	final CheckboxMenuItem overridePlatChecks = new CheckboxMenuItem("Override Mobile Platform checks");
-	final CheckboxMenuItem siemensFriendlyDrawing = new CheckboxMenuItem("Siemens-friendly drawing methods");
 
-	final CheckboxMenuItem deleteTemporaryKJXFiles = new CheckboxMenuItem("Delete KJX files' temporary JAR/JAD");
-	final CheckboxMenuItem dumpAudioData = new CheckboxMenuItem("Dump Audio Streams");
-	final CheckboxMenuItem dumpGraphicsData = new CheckboxMenuItem("Dump Graphics Objects");
-	final CheckboxMenuItem showMemoryUsage = new CheckboxMenuItem("Show VM Memory Usage");
-	
+	final CheckboxMenuItem doNotTranslateDrawRGB = new CheckboxMenuItem("不翻译 DrawRGB 函数调用");
+	final CheckboxMenuItem transToOriginOnReset = new CheckboxMenuItem("gfx 重置时转换到原点");
+	final CheckboxMenuItem immediateRepaints = new CheckboxMenuItem("画布重绘即刻处理");
+	final CheckboxMenuItem overridePlatChecks = new CheckboxMenuItem("覆盖移动平台检查");
+	final CheckboxMenuItem siemensFriendlyDrawing = new CheckboxMenuItem("绘制方式针对西门子优化");
+
+	final CheckboxMenuItem deleteTemporaryKJXFiles = new CheckboxMenuItem("删除 KJX 文件的临时 JAR/JAD 文件");
+	final CheckboxMenuItem dumpAudioData = new CheckboxMenuItem("转储音频流");
+	final CheckboxMenuItem dumpGraphicsData = new CheckboxMenuItem("转储图像对象");
+	final CheckboxMenuItem showMemoryUsage = new CheckboxMenuItem("显示 VM 内存使用率");
+
 	// M3G Debugging
-	final CheckboxMenuItem M3GUntextured = new CheckboxMenuItem("Draw Only Vertex Colors");
-	final CheckboxMenuItem M3GWireframe = new CheckboxMenuItem("Wireframe Mode");
-
+	final CheckboxMenuItem M3GUntextured = new CheckboxMenuItem("绘制仅顶点的颜色");
+	final CheckboxMenuItem M3GWireframe = new CheckboxMenuItem("线框模式");
 
 	public AWTGUI(Config config)
 	{
@@ -318,18 +317,21 @@ public final class AWTGUI
 		awtDialogs[1].setForeground(Color.ORANGE);
 		awtDialogs[1].setLayout( new FlowLayout(FlowLayout.CENTER, 200, 0));  
 		awtDialogs[1].setUndecorated(true); /* Whenever a Dialog is undecorated, it's because it's meant to look like an internal menu on FreeJ2ME's main Frame */
-		awtDialogs[1].setSize(230, 235);
+		awtDialogs[1].setSize(230, 305);
 		awtDialogs[1].setResizable(false);
 		awtDialogs[1].setLocationRelativeTo(main);
-		awtDialogs[1].add(new Label("FreeJ2ME-Plus - A free J2ME emulator"));
-		awtDialogs[1].add(new Label("Version " + VERSION));
+		awtDialogs[1].add(new Label("FreeJ2ME-Plus - 免费 J2ME 模拟器"));
+		awtDialogs[1].add(new Label("版本 " + VERSION));
 		awtDialogs[1].add(new Label("--------------------------------"));
-		awtDialogs[1].add(new Label("Original Project Authors:"));
+		awtDialogs[1].add(new Label("项目原作者:"));
 		awtDialogs[1].add(new Label("David Richardson (Recompile)"));
 		awtDialogs[1].add(new Label("Saket Dandawate (hex007)"));
 		awtDialogs[1].add(new Label("--------------------------------"));
-		awtDialogs[1].add(new Label("Plus Fork Maintainer:"));
+		awtDialogs[1].add(new Label("Plus版本分支维护者:"));
 		awtDialogs[1].add(new Label("Paulo Sousa (AShiningRay)"));
+		awtDialogs[1].add(new Label("--------------------------------"));
+		awtDialogs[1].add(new Label("简体中文汉化:"));
+		awtDialogs[1].add(new Label("R-YaTian"));
 		awtDialogs[1].add(awtButtons[0]);
 
 
@@ -340,8 +342,8 @@ public final class AWTGUI
 		awtDialogs[0].setSize(230, 125);
 		awtDialogs[0].setResizable(false);
 		awtDialogs[0].setLocationRelativeTo(main);
-		awtDialogs[0].add(new Label("Select a Resolution from the Dropdown"));
-		awtDialogs[0].add(new Label("Then hit 'Apply'!"));
+		awtDialogs[0].add(new Label("在下拉选框中选取分辨率"));
+		awtDialogs[0].add(new Label("然后点击'应用'!"));
 		awtDialogs[0].add(resChoice);
 		awtDialogs[0].add(awtButtons[1]);
 		awtDialogs[0].add(awtButtons[2]);
@@ -379,9 +381,9 @@ public final class AWTGUI
 			inputButtons[i].setForeground(Color.ORANGE);
 		}
 
-		awtDialogs[4].add(new Label("Map keys by"));
-		awtDialogs[4].add(new Label("clicking each"));
-		awtDialogs[4].add(new Label("button below"));
+		awtDialogs[4].add(new Label("点击下方各按"));
+		awtDialogs[4].add(new Label("钮以配置按键"));
+		awtDialogs[4].add(new Label("点击应用保存"));
 
 		awtDialogs[4].add(awtButtons[5]);
 		awtDialogs[4].add(new Label(""));
@@ -431,7 +433,7 @@ public final class AWTGUI
 		awtDialogs[4].add(new Label("-----------------------"));
 		awtDialogs[4].add(new Label("-----------------------"));
 
-		awtDialogs[4].add(new Label("Hotkeys"));
+		awtDialogs[4].add(new Label("热键"));
 		awtDialogs[4].add(new Label(""));
 		awtDialogs[4].add(new Label("(Ctrl + *)"));
 
@@ -439,9 +441,9 @@ public final class AWTGUI
 		awtDialogs[4].add(new Label(""));
 		awtDialogs[4].add(new Label(""));
 		
-		awtDialogs[4].add(new Label("Fast-Forward"));
-		awtDialogs[4].add(new Label("Screenshot"));
-		awtDialogs[4].add(new Label("Pause/Resume"));
+		awtDialogs[4].add(new Label("连发"));
+		awtDialogs[4].add(new Label("截屏"));
+		awtDialogs[4].add(new Label("暂停/恢复"));
 
 		awtDialogs[4].add(inputButtons[19]);
 		awtDialogs[4].add(inputButtons[20]);
@@ -451,7 +453,7 @@ public final class AWTGUI
 		awtDialogs[4].add(new Label(""));
 		awtDialogs[4].add(new Label(""));
 		
-		awtDialogs[4].add(new Label("Slowdown"));
+		awtDialogs[4].add(new Label("减速"));
 		awtDialogs[4].add(new Label("TODO"));
 		awtDialogs[4].add(new Label("TODO"));
 
@@ -466,7 +468,7 @@ public final class AWTGUI
 		awtDialogs[3].setUndecorated(true);
 		awtDialogs[3].setSize(230, 80);
 		awtDialogs[3].setLocationRelativeTo(main);
-		awtDialogs[3].add(new Label("This change requires a restart to apply!"));
+		awtDialogs[3].add(new Label("此项更改需要重启以应用!"));
 		awtDialogs[3].add(awtButtons[3]);
 		awtDialogs[3].add(awtButtons[4]);
 		
@@ -1010,10 +1012,10 @@ public final class AWTGUI
 
 	public void updateMemStatDialog() 
 	{
-		totalMemLabel.setText(new String("Total Mem: " + (Runtime.getRuntime().totalMemory() / 1024) + " KB"));
-		freeMemLabel.setText(new String("Free Mem : " + (Runtime.getRuntime().freeMemory() / 1024) + " KB"));
-		usedMemLabel.setText(new String("Used Mem : " + ((Runtime.getRuntime().totalMemory() / 1024) - (Runtime.getRuntime().freeMemory() / 1024)) + " KB"));
-		maxMemLabel.setText(new String("Max Mem  : " + (Runtime.getRuntime().maxMemory() / 1024) + " KB"));
+		totalMemLabel.setText(new String("总内存: " + (Runtime.getRuntime().totalMemory() / 1024) + " KB"));
+		freeMemLabel.setText(new String("空闲内存 : " + (Runtime.getRuntime().freeMemory() / 1024) + " KB"));
+		usedMemLabel.setText(new String("已用内存 : " + ((Runtime.getRuntime().totalMemory() / 1024) - (Runtime.getRuntime().freeMemory() / 1024)) + " KB"));
+		maxMemLabel.setText(new String("最大内存 : " + (Runtime.getRuntime().maxMemory() / 1024) + " KB"));
 	}
 
 	class UIListener implements ActionListener 
@@ -1023,7 +1025,7 @@ public final class AWTGUI
 
 			if(a.getActionCommand() == "Open") 
 			{
-				FileDialog filePicker = new FileDialog(main, "Open JAR / JAD / KJX File", FileDialog.LOAD);
+				FileDialog filePicker = new FileDialog(main, "打开 JAR / JAD / KJX 文件", FileDialog.LOAD);
 				String filename;
 				filePicker.setFilenameFilter(new FilenameFilter()
 				{
