@@ -869,7 +869,7 @@ public class MobilePlatform
 
 	public static void checkFileEncoding()
 	{
-		if(!System.getProperty("file.encoding").equals(Mobile.textEncoding))
+		if(!System.getProperty("file.encoding").equals(Mobile.textEncoding) && !System.getProperty("file.encoding").equals("GBK"))
 		{
 			Mobile.log(Mobile.LOG_INFO, MobilePlatform.class.getPackage().getName() + "." + MobilePlatform.class.getSimpleName() + ": " + "different encoding: " + System.getProperty("file.encoding") + " while it should be " + Mobile.textEncoding + ". Restarting freeJ2ME to apply new encoding");
 			Mobile.restartApp();

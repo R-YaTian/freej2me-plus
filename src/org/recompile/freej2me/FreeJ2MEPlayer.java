@@ -34,10 +34,10 @@ import org.recompile.mobile.PlatformPlayer;
 
 public final class FreeJ2MEPlayer extends Dialog 
 {
-    private Label dropMessageLabel = new Label(">> DROP HERE <<", Label.CENTER);
+    private Label dropMessageLabel = new Label(">> 拖放到此 <<", Label.CENTER);
     private Timer playbackTimer;
-    private Label fileNameLabel = new Label("Loaded Media File:");
-    private Label fileTypeLabel = new Label("File Type: None");
+    private Label fileNameLabel = new Label("加载的媒体文件:");
+    private Label fileTypeLabel = new Label("文件类型: 无");
     private Label playbackTicker = new Label("00:00 / 00:00", Label.CENTER);
     private ProgressBar progressBar;
     private Button[] UIButtons = new Button[6];
@@ -47,7 +47,7 @@ public final class FreeJ2MEPlayer extends Dialog
 
     public FreeJ2MEPlayer(Frame parent) 
     {
-        super(parent, "FreeJ2ME Media Player", true);
+        super(parent, "媒体播放器", true);
         if(Manager.toneSynth == null) { Manager.prepareMediaEngine(); }
         setupPlayerDialog();
     }
@@ -73,12 +73,12 @@ public final class FreeJ2MEPlayer extends Dialog
         fileNameField.setForeground(Color.WHITE);
         progressBar = new ProgressBar();
 
-        UIButtons[0] = new Button("Play");
-        UIButtons[1] = new Button("Pause");
-        UIButtons[2] = new Button("Stop");
+        UIButtons[0] = new Button("播放");
+        UIButtons[1] = new Button("暂停");
+        UIButtons[2] = new Button("停止");
         UIButtons[3] = new Button("- 5s");
         UIButtons[4] = new Button("+ 5s");
-        UIButtons[5] = new Button("Click here to open a File (or drag)");
+        UIButtons[5] = new Button("点击(或拖放到)此处打开文件");
 
         for(int i = 0; i < UIButtons.length; i++) { UIButtons[i].setBackground(FreeJ2ME.freeJ2MEDragColor); }
 
@@ -308,7 +308,7 @@ public final class FreeJ2MEPlayer extends Dialog
         }
         if(filePath == "") 
         {
-            FileDialog fileDialog = new FileDialog(this, "Select a Media File", FileDialog.LOAD);
+            FileDialog fileDialog = new FileDialog(this, "选取媒体文件", FileDialog.LOAD);
             fileDialog.setVisible(true);
             filePath = fileDialog.getDirectory() + fileDialog.getFile();
             fileNameField.setText(fileDialog.getFile());
@@ -323,14 +323,14 @@ public final class FreeJ2MEPlayer extends Dialog
                     fileData.read(toneData);
                     
                     mediaPlayer = Manager.createPlayer(new ByteArrayInputStream(NokiaOTTDecoder.convertToMidi(toneData) ), ""); // Let PlatformPlayer find out what type to prepare
-                    fileTypeLabel.setText("File Type: audio/ott");
+                    fileTypeLabel.setText("文件类型: 音频/ott");
                 }
                 else {  mediaPlayer = Manager.createPlayer(new FileInputStream(filePath), ""); /* Let PlatformPlayer find out what type to prepare */ }
                 
                 mediaPlayer.realize();
                 mediaPlayer.prefetch();
 
-                fileTypeLabel.setText("File Type: " + ((PlatformPlayer) mediaPlayer).contentType);
+                fileTypeLabel.setText("文件类型: " + ((PlatformPlayer) mediaPlayer).contentType);
                 
                 updatePlaybackTicker(0, mediaPlayer.getDuration());
                 startPlaybackTimer();
@@ -354,7 +354,7 @@ public final class FreeJ2MEPlayer extends Dialog
                     fileData.read(toneData);
                     
                     mediaPlayer = Manager.createPlayer(new ByteArrayInputStream(NokiaOTTDecoder.convertToMidi(toneData)), "");
-                    fileTypeLabel.setText("File Type: audio/ott");
+                    fileTypeLabel.setText("文件类型: 音频/ott");
                 } else {
                     mediaPlayer = Manager.createPlayer(new FileInputStream(filePath), "");
                 }
@@ -362,7 +362,7 @@ public final class FreeJ2MEPlayer extends Dialog
                 mediaPlayer.realize();
                 mediaPlayer.prefetch();
 
-                fileTypeLabel.setText("File Type: " + ((PlatformPlayer) mediaPlayer).contentType);
+                fileTypeLabel.setText("文件类型: " + ((PlatformPlayer) mediaPlayer).contentType);
                 updatePlaybackTicker(0, mediaPlayer.getDuration());
                 startPlaybackTimer();
             } 
@@ -401,7 +401,7 @@ public final class FreeJ2MEPlayer extends Dialog
             playbackTimer = null;
             updatePlaybackTicker(0, 0);
             mediaPlayer.close();
-            fileTypeLabel.setText("File Type: None");
+            fileTypeLabel.setText("文件类型: 无");
             playbackTicker.setVisible(true);
             progressBar.setVisible(true);
         }
