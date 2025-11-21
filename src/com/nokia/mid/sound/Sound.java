@@ -19,7 +19,7 @@ package com.nokia.mid.sound;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
+import java.util.ArrayList;
 
 import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
@@ -51,6 +51,8 @@ public class Sound
 	 * It's also provided by the J2ME Docs: https://docs.oracle.com/javame/config/cldc/ref-impl/midp2.0/jsr118/javax/microedition/media/control/ToneControl.html
 	 */
 	private static final double SEMITONE_CONST = 17.31234049066755; // 1/(ln(2^(1/12)))
+
+	private static ArrayList<Sound> players = new ArrayList<Sound>();
 
 	private Player player;
 
@@ -100,9 +102,9 @@ public class Sound
 					if(Mobile.dumpAudioStreams) { Manager.dumpAudioStream(new ByteArrayInputStream(data), "audio/x-tone-seq"); } // Dump original OTA as well
 					if(player == null || !isPrevPlayerTone)  // check for null because release() can be called after all.
 					{
-						if(player != null) { player.close(); }
+						if(player != null) { release(); }
 						player = Manager.createPlayer(new ByteArrayInputStream(NokiaOTTDecoder.convertToMidi(data)), "audio/x-tone-seq"); // This will dump the converted file if the setting is enabled
-						isPrevPlayerTone = true; 
+						isPrevPlayerTone = true;
 					}
 					else
 					{
@@ -112,12 +114,13 @@ public class Sound
 						if(Mobile.dumpAudioStreams) { Manager.dumpAudioStream(new ByteArrayInputStream(NokiaOTTDecoder.convertToMidi(data)), "audio/x-tone-seq"); } // Here we have to dump the stream manually, as setSequence is a fast way to swap short tone sequences
 					}
 					player.prefetch();
+					if(!players.contains(this)) { players.add(this); }
 				}
 				catch (MidiUnavailableException e) { Mobile.log(Mobile.LOG_ERROR, Sound.class.getPackage().getName() + "." + Sound.class.getSimpleName() + ": " + " couldn't create Tone player:" + e.getMessage()); }
 			}
 			else if (type == FORMAT_WAV) 
 			{
-				if (player != null) { player.close(); }
+				if (player != null) { release(); }
 				String format;
 				if(data[0] == 'M' && data[1] == 'T' && data[2] == 'h' && data[3] == 'd') { format = "audio/mid"; }
 				else if(data[0] == 'R' && data[1] == 'I' && data[2] == 'F' && data[3] == 'F') { format = "audio/wav"; }
@@ -135,6 +138,7 @@ public class Sound
 				player = Manager.createPlayer(new ByteArrayInputStream(data), format);
 				player.prefetch();
 				isPrevPlayerTone = false;
+				if(!players.contains(this)) { players.add(this); }
 			}
 			else { throw new IllegalArgumentException("Nokia Sound: Invalid audio format: " + type); }
 		}
@@ -161,6 +165,12 @@ public class Sound
 		if(getState() == SOUND_PLAYING) { player.stop(); }
 		if(loop < 0) { throw new IllegalArgumentException("Cannot play media, invalid loop value received"); }
 		else if(loop == 0) { loop = -1; }
+
+		// We only support one player running at a time here, so stop any currently running ones before starting
+		for(int i = 0; i < players.size(); i++) 
+		{
+			if(players.get(i).getState() == SOUND_PLAYING) { players.get(i).stop(); }
+		}
 		
 		if(((PlatformPlayer)player).nokiaListener != listener) { ((PlatformPlayer) player).setSoundListener(this, listener); }
 
@@ -170,7 +180,15 @@ public class Sound
 	}
 
 	// Nokia UI API 1.1 states that this should be a deallocate() call, but since we always recreate the player on init, we can use close()
-	public void release() { if(player != null) { player.close(); player = null; } }
+	public void release() 
+	{ 
+		if(player != null) 
+		{
+			player.close();
+			player = null;
+			players.remove(this);
+		}
+	}
 
 	public void resume() 
 	{

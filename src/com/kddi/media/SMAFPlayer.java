@@ -29,14 +29,13 @@ public class SMAFPlayer extends MediaPlayer
 
     protected int id, pitch = 0, tempo = 100, volume = 100;
     protected MediaPlayerListener listener;
-    protected Object resource;
+    protected MediaResource resource;
 
     protected SMAFPlayer(MediaResource resource, MediaPlayerBox box) 
     { 
         super(resource, box);
 
-        byte[] resourceDat = MediaManager.getResource(resource);
-        InputStream stream = new ByteArrayInputStream(resourceDat);
+        InputStream stream = new ByteArrayInputStream(resource.getData());
 
         try 
         { 
@@ -68,7 +67,7 @@ public class SMAFPlayer extends MediaPlayer
 
     public void pause() { this._player.stop(); }
 
-    public void play() { this.play(0); }
+    public void play() { this.play(1); }
 
     public void play(int count) 
     {
@@ -115,4 +114,6 @@ public class SMAFPlayer extends MediaPlayer
     public void addMediaEventListener(MediaEventListener l) { this._player.addPlayerListener(l); }
 
     public void removeMediaEventListener(MediaEventListener l) { this._player.removePlayerListener(l); }
+
+    public int getState() { return _player.getState(); }
 }

@@ -16,6 +16,8 @@
 */
 package com.kddi.media;
 
+import java.util.concurrent.locks.LockSupport;
+
 import javax.microedition.lcdui.Canvas;
 
 public class MediaPlayerBox extends Canvas implements MediaPlayerInterface 
@@ -32,6 +34,10 @@ public class MediaPlayerBox extends Canvas implements MediaPlayerInterface
     private int mode = BACKGROUND;
     private MediaResource _resource;
     private MediaPlayer _player;
+    private MediaEventListener listener;
+    private int volume = 100;
+    private int tempo = 100;
+    private int pitch = 0;
 
     public MediaPlayerBox() { this(null, FOREGROUND); }
 
@@ -48,32 +54,34 @@ public class MediaPlayerBox extends Canvas implements MediaPlayerInterface
         this._resource = null;
         this._player = null;
 
-        if (resource != null) this.setResource(resource);
+        if (resource != null) { this.setResource(resource); }
     }
 
-    public void addMediaEventListener(MediaEventListener l) { this._player.addMediaEventListener(l); }
+    public void addMediaEventListener(MediaEventListener l) { listener = l; }
 
     public int getAttribute(int attr) { return this._player.getAttribute(attr); }
 
     protected int getMode() { return this.mode; }
 
-    public int getPitch() { return this._player.getPitch(); }
+    public int getPitch() { return pitch; }
 
     protected MediaPlayer getPlayer() { return this._player; }
 
     public MediaResource getResource() { return this._resource; }
 
-    public int getTempo() { return this._player.getTempo(); }
+    public int getTempo() { return tempo; }
 
-    public int getVolume() { return this._player.getVolume(); }
+    public int getVolume() { return volume; }
 
     public void hide() { }
 
-    protected MediaPlayer instantiatePlayer(MediaResource resource) {
-        if (resource.getType() == MediaResource.SMAF_YAMAHA_MA1 ||
+    protected MediaPlayer instantiatePlayer(MediaResource resource) 
+    {
+        if (resource.getType() == MediaResource.FORMAT_CMF1 ||
+        resource.getType() == MediaResource.SMAF_YAMAHA_MA1 ||
         resource.getType() == MediaResource.SMAF_YAMAHA_MA2 ||
         resource.getType() == MediaResource.SMAF_YAMAHA_MA3 || 
-        resource.getType() == MediaResource.SMAF_YAMAHA_MA5) 
+        resource.getType() == MediaResource.SMAF_YAMAHA_MA5)
         {
             this._player = new SMAFPlayer(resource, this);
             return this._player;
@@ -85,7 +93,25 @@ public class MediaPlayerBox extends Canvas implements MediaPlayerInterface
 
     public void pause() { this._player.pause(); }
 
-    public void play() { this._player.play(); }
+    public void play() 
+    { 
+        this._player.addMediaEventListener(listener);
+        if(this._player.getState() >= javax.microedition.media.Player.REALIZED) 
+        {
+            this._player.setPitch(Math.max(-6, Math.min(pitch, 6)));
+            this._player.setTempo(Math.max(85, Math.min(tempo, 115)));
+            this._player.setVolume(Math.max(0, Math.min(volume, 100)));
+        }
+        this._player.play(); 
+
+        /* play() should not return until media playback finishes in FOREGROUND mode, but tetris outdoor doesn't like this
+
+        if(mode == FOREGROUND) 
+        { 
+            while(this._player.getState() == javax.microedition.media.Player.STARTED) { LockSupport.parkNanos(1000000); }
+        } 
+        */
+    }
 
     public void play(int count) { this._player.play(count); }
 
@@ -105,7 +131,7 @@ public class MediaPlayerBox extends Canvas implements MediaPlayerInterface
 
     public void setResource(MediaResource resource) 
     {
-        if (state != STOP) { throw new IllegalStateException("state must be STOP"); }
+        if (this._player != null && this._player.getState() > javax.microedition.media.Player.PREFETCHED) { throw new IllegalStateException("state must be STOP"); }
         if (this._resource != null) 
         {
             throw new IllegalStateException("resource must be unset before setting.");
@@ -114,17 +140,17 @@ public class MediaPlayerBox extends Canvas implements MediaPlayerInterface
 
         // FIXME: Check the resource can be played.
         this._resource = resource;
-        MediaManager.linkMediaResourceToMediaPlayerBox(resource, this);
+        resource.addPlayer(this);
         if (_player != null) { this._player.dispose(); }
         this._player = instantiatePlayer(resource);
         this._player.setResource(resource);
     }
 
-    public void setPitch(int pitch) { this._player.setPitch(Math.max(-6, Math.min(pitch, 6))); }
+    public void setPitch(int pitch) { this.pitch = pitch; }
 
-    public void setTempo(int tempo) { this._player.setTempo(Math.max(85, Math.min(tempo, 115))); }
+    public void setTempo(int tempo) { this.tempo = tempo; }
 
-    public void setVolume(int volume) { this._player.setVolume(Math.max(0, Math.min(volume, 100))); }
+    public void setVolume(int volume) { this.volume = volume; }
 
     public void show() 
     { 
@@ -138,7 +164,9 @@ public class MediaPlayerBox extends Canvas implements MediaPlayerInterface
 
     public void unsetResource(MediaResource resource) 
     {
-        MediaManager.unlinkMediaResource(resource, this);
+        if (this._player.getState() > javax.microedition.media.Player.PREFETCHED) { return; }
+        resource.removePlayer(this);
+        if (_player != null) { this._player.dispose(); }
         this._resource = null;
     }
 }

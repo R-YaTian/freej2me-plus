@@ -19,8 +19,6 @@ package org.recompile.mobile;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,17 +31,10 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-
 import javax.microedition.lcdui.Canvas;
-import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.game.GameCanvas;
-
-import java.awt.image.BufferedImage;
 
 /*
 	Mobile Platform
@@ -168,7 +159,7 @@ public class MobilePlatform
 
 	public static PlatformImage getLcdBackbuffer() { return lcd; }
 
-	public BufferedImage getLcdFrontbufferImage() { return lcdFrontbuffer.getCanvas(); }
+	public PlatformImage getLcdFrontbuffer() { return lcdFrontbuffer; }
 
 	public Graphics getLcdFrontbufferGraphics() { return (Graphics) gcFrontbuffer; }
 
@@ -453,7 +444,7 @@ public class MobilePlatform
 				mask = 1 << 0x13; 
 				eventKey = com.nttdocomo.ui.Display.KEY_DOWN;
 				break;
-			case Canvas.FIRE:
+			case Canvas.FIRE: // Doubles as KDDI_CLR
 				mask = 1 << 0x14;
 				eventKey = com.nttdocomo.ui.Display.KEY_SELECT;
 				break;
@@ -513,10 +504,11 @@ public class MobilePlatform
 				mask = 1 << 0x16;
 				eventKey = com.nttdocomo.ui.Display.KEY_SOFT2;
 				break;
-			case Mobile.KDDI_CLR:
-				mask = 1 << 0x20;
-				eventKey = com.nttdocomo.ui.Display.KEY_CLEAR;
-				break;
+			// TODO: This case might not be needed for DoJa at all
+			//case Mobile.KDDI_CLR:
+			//	mask = 1 << 0x20;
+			//	eventKey = com.nttdocomo.ui.Display.KEY_CLEAR;
+			//	break;
 			default:
 				mask = 0;
 		}
