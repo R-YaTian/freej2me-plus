@@ -36,8 +36,8 @@ public final class FreeJ2MEPlayer extends Dialog
 {
     private Label dropMessageLabel = new Label(">> 拖放到此 <<", Label.CENTER);
     private Timer playbackTimer;
-    private Label descLabel1 = new Label("Click the button below, or drag a file", Label.CENTER);
-    private Label descLabel2 = new Label("onto this window to load J2ME media.", Label.CENTER);
+    private Label descLabel1 = new Label("点击(或拖放到)", Label.CENTER);
+    private Label descLabel2 = new Label("此窗口以打开文件", Label.CENTER);
     private Label fileNameLabel = new Label("加载的媒体文件:");
     private Label fileTypeLabel = new Label("文件类型: 无");
     private Label playbackTicker = new Label("00:00 / 00:00", Label.CENTER);
@@ -80,7 +80,7 @@ public final class FreeJ2MEPlayer extends Dialog
         UIButtons[2] = new Button("停止");
         UIButtons[3] = new Button("- 5s");
         UIButtons[4] = new Button("+ 5s");
-        UIButtons[5] = new Button("点击(或拖放到)此处打开文件");
+        UIButtons[5] = new Button("载入文件...");
 
         for(int i = 0; i < UIButtons.length; i++) { UIButtons[i].setBackground(FreeJ2ME.freeJ2MEDragColor); }
 

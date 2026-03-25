@@ -309,8 +309,8 @@ public final class AWTGUI
 	// Speedhacks
 	final CheckboxMenuItem noAlphaOnBlankImages = new CheckboxMenuItem("空白图像无 alpha");
 	final CheckboxMenuItem M3GHalfRes = new CheckboxMenuItem("半分辨率时渲染M3G");
-  final CheckboxMenuItem MCV3HalfRes = new CheckboxMenuItem("Render MascotCapsuleV3 at Half Res");
-	final CheckboxMenuItem MCV3NoLighting = new CheckboxMenuItem("Disable MascotCapsuleV3's lighting");
+	final CheckboxMenuItem MCV3HalfRes = new CheckboxMenuItem("半分辨率时渲染MascotCapsuleV3");
+	final CheckboxMenuItem MCV3NoLighting = new CheckboxMenuItem("禁用MascotCapsuleV3光照");
 
 	// Compatibility settings
 	final CheckboxMenuItem fantasyZoneFix = new CheckboxMenuItem("修复Fantasy Zone 176x208版本异常镜像问题");
@@ -319,7 +319,7 @@ public final class AWTGUI
 	final CheckboxMenuItem overridePlatChecks = new CheckboxMenuItem("覆盖移动平台检查");
 	final CheckboxMenuItem siemensFriendlyDrawing = new CheckboxMenuItem("绘制方式针对西门子优化");
 	final CheckboxMenuItem ignoreVolumeChanges = new CheckboxMenuItem("忽略音量更改");
-  final CheckboxMenuItem MCV3HorFovFix = new CheckboxMenuItem("MascotCapsuleV3 Horizontal FOV Fix");
+	final CheckboxMenuItem MCV3HorFovFix = new CheckboxMenuItem("MascotCapsuleV3水平FOV修复");
 
 	final CheckboxMenuItem deleteTemporaryKJXFiles = new CheckboxMenuItem("删除 KJX 文件的临时 JAR/JAD 文件");
 	final CheckboxMenuItem dumpAudioData = new CheckboxMenuItem("转储音频流");
