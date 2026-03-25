@@ -1098,9 +1098,6 @@ public class Mobile
 			String java = System.getProperty("java.home") + "/bin/java";
 			String classPath = System.getProperty("java.class.path");
 
-			// Get the main class name
-			String mainClass = getMainClassFromJar("file:" + classPath);
-
 			String jarPath = null;
 			
 			if(MobilePlatform.fileName != null) 
@@ -1111,13 +1108,11 @@ public class Mobile
 			
 			if(!MobilePlatform.isLibretro)
 			{
-				String[] commands = new String[] { java, "-jar", "-Dfile.encoding="+textEncoding, classPath, jarPath};
-
 				ProcessBuilder processBuilder = null;
 
-				if(jarPath != null) { processBuilder = new ProcessBuilder(new String[] { java, "-jar", "-Dfile.encoding="+textEncoding, classPath, jarPath}); }
-				else { processBuilder = new ProcessBuilder(new String[] { java, "-jar", "-Dfile.encoding="+textEncoding, classPath}); }
-				
+				if(jarPath != null) { processBuilder = new ProcessBuilder(new String[] { java, "-jar", "-Dfile.encoding=GBK", classPath, jarPath}); }
+				else { processBuilder = new ProcessBuilder(new String[] { java, "-jar", "-Dfile.encoding=GBK", classPath}); }
+
 				processBuilder.start();
 
 				System.exit(0);
@@ -1133,18 +1128,4 @@ public class Mobile
 		}
 		catch(Exception e) { log(Mobile.LOG_INFO, Mobile.class.getPackage().getName() + "." + Mobile.class.getSimpleName() + ": " + "Failed to restart FreeJ2ME: " + e.getMessage()); e.printStackTrace(); }
 	}
-
-	private static String getMainClassFromJar(String classPath) 
-	{
-        try 
-		{
-            URL jarUrl = new URL(classPath);
-			
-			JarFile jarFile = new JarFile(jarUrl.getFile());
-			Manifest manifest = jarFile.getManifest();
-			Attributes attributes = manifest.getMainAttributes();
-			return attributes.getValue("Main-Class");
-        } 
-		catch (Exception e) { return null; } // This normally shouldn't fail
-    }
 }

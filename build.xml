@@ -13,6 +13,7 @@
 
     <echo message="Building Objectweb asm libraries" />
 	<javac
+		debug="false"
 		srcdir="src"
 		destdir="build/classes"
 		includeantruntime="false"
