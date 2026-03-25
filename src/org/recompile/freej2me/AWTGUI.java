@@ -124,7 +124,7 @@ public final class AWTGUI
 	final Menu M3GDebug = new Menu("M3G 调试");
 
 	/* M3G Debug submenu */
-	final Menu MCV3Debug = new Menu("MascotCapsuleV3 Debugging");
+	final Menu MCV3Debug = new Menu("MascotCapsuleV3 调试");
 
 	/* Input mapping keys */
 	final Button inputButtons[] = new Button[] 
@@ -212,10 +212,10 @@ public final class AWTGUI
 
 	final CheckboxMenuItem[] rotations = 
 	{
-		new CheckboxMenuItem("No rotation", true),
-		new CheckboxMenuItem("90 degrees",  false),
-		new CheckboxMenuItem("180 degrees", false),
-		new CheckboxMenuItem("270 degrees", false)
+		new CheckboxMenuItem("不旋转", true),
+		new CheckboxMenuItem("90度",  false),
+		new CheckboxMenuItem("180度", false),
+		new CheckboxMenuItem("270度", false)
 	};
 	final String[] rotationValues = {"0", "90", "180", "270"};
 
@@ -331,8 +331,8 @@ public final class AWTGUI
 	final CheckboxMenuItem M3GWireframe = new CheckboxMenuItem("线框模式");
 
 	// MascotCapsuleV3 Debugging
-	final CheckboxMenuItem MCV3ShowHeapUsage = new CheckboxMenuItem("Show Heap Usage");
-	final CheckboxMenuItem MCV3ShowTimeMetrics = new CheckboxMenuItem("Show Time Metrics");
+	final CheckboxMenuItem MCV3ShowHeapUsage = new CheckboxMenuItem("显示堆用量");
+	final CheckboxMenuItem MCV3ShowTimeMetrics = new CheckboxMenuItem("显示时间指标");
 
 	final TextArea logArea = new TextArea();
 	final TextArea memArea = new TextArea();
