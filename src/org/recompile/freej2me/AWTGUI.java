@@ -56,7 +56,7 @@ import org.recompile.mobile.MobilePlatform;
 
 public final class AWTGUI 
 {
-	final String VERSION = "1.51c";
+	final String VERSION = "1.52c";
 	/* This is used to indicate to FreeJ2ME that it has to call "settingsChanged()" to apply changes made here */
 	private boolean hasPendingChange;
 
@@ -93,6 +93,8 @@ public final class AWTGUI
 	final Menu backlightColor = new Menu("背光颜色");
 	final Menu fontOffset = new Menu("字体大小偏移");
 
+	public final String[] supportedResolutions = {"96x65","101x64","101x80","128x128","130x130","120x160","128x160","132x176","208x173","176x208","176x220","220x176","208x208","180x320","320x180","240x240","208x320","240x320","320x240","240x400","400x240","240x432","240x480","360x360","352x416","360x640","640x360","640x480","345x800","800x345","480x800","800x480"};
+
 	/* Dialogs for resolution changes, restart notifications, MemStats and info about FreeJ2ME */
 	final Dialog[] awtDialogs = 
 	{
@@ -120,6 +122,9 @@ public final class AWTGUI
 
 	/* M3G Debug submenu */
 	final Menu M3GDebug = new Menu("M3G 调试");
+
+	/* M3G Debug submenu */
+	final Menu MCV3Debug = new Menu("MascotCapsuleV3 Debugging");
 
 	/* Input mapping keys */
 	final Button inputButtons[] = new Button[] 
@@ -304,6 +309,8 @@ public final class AWTGUI
 	// Speedhacks
 	final CheckboxMenuItem noAlphaOnBlankImages = new CheckboxMenuItem("空白图像无 alpha");
 	final CheckboxMenuItem M3GHalfRes = new CheckboxMenuItem("半分辨率时渲染M3G");
+  final CheckboxMenuItem MCV3HalfRes = new CheckboxMenuItem("Render MascotCapsuleV3 at Half Res");
+	final CheckboxMenuItem MCV3NoLighting = new CheckboxMenuItem("Disable MascotCapsuleV3's lighting");
 
 	// Compatibility settings
 	final CheckboxMenuItem fantasyZoneFix = new CheckboxMenuItem("修复Fantasy Zone 176x208版本异常镜像问题");
@@ -312,6 +319,7 @@ public final class AWTGUI
 	final CheckboxMenuItem overridePlatChecks = new CheckboxMenuItem("覆盖移动平台检查");
 	final CheckboxMenuItem siemensFriendlyDrawing = new CheckboxMenuItem("绘制方式针对西门子优化");
 	final CheckboxMenuItem ignoreVolumeChanges = new CheckboxMenuItem("忽略音量更改");
+  final CheckboxMenuItem MCV3HorFovFix = new CheckboxMenuItem("MascotCapsuleV3 Horizontal FOV Fix");
 
 	final CheckboxMenuItem deleteTemporaryKJXFiles = new CheckboxMenuItem("删除 KJX 文件的临时 JAR/JAD 文件");
 	final CheckboxMenuItem dumpAudioData = new CheckboxMenuItem("转储音频流");
@@ -321,6 +329,10 @@ public final class AWTGUI
 	// M3G Debugging
 	final CheckboxMenuItem M3GUntextured = new CheckboxMenuItem("绘制仅顶点的颜色");
 	final CheckboxMenuItem M3GWireframe = new CheckboxMenuItem("线框模式");
+
+	// MascotCapsuleV3 Debugging
+	final CheckboxMenuItem MCV3ShowHeapUsage = new CheckboxMenuItem("Show Heap Usage");
+	final CheckboxMenuItem MCV3ShowTimeMetrics = new CheckboxMenuItem("Show Time Metrics");
 
 	final TextArea logArea = new TextArea();
 	final TextArea memArea = new TextArea();
@@ -337,7 +349,7 @@ public final class AWTGUI
 		try { logReader = new BufferedReader(new FileReader(Mobile.logFile)); }
 		catch(Exception e) { System.out.println("Failed to create log window writer:" + e.getMessage()); }
 
-		resChoice.setFont(dialogFont);
+		resChoice.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 16));
 		resChoice.setBackground(FreeJ2ME.freeJ2MEBGColor);
 		resChoice.setForeground(Color.ORANGE);
 
@@ -380,7 +392,7 @@ public final class AWTGUI
 
 		awtDialogs[0].setBackground(FreeJ2ME.freeJ2MEBGColor);
 		awtDialogs[0].setForeground(Color.ORANGE);
-		awtDialogs[0].setLayout( new FlowLayout(FlowLayout.CENTER, 60, 5));
+		awtDialogs[0].setLayout( new FlowLayout(FlowLayout.CENTER, 60, 3));
 		awtDialogs[0].setUndecorated(true);
 		awtDialogs[0].setSize(230, 125);
 		awtDialogs[0].setResizable(false);
@@ -721,6 +733,28 @@ public final class AWTGUI
 			}
 		});
 
+		MCV3HalfRes.addItemListener(new ItemListener() 
+		{
+			public void itemStateChanged(ItemEvent e) 
+			{
+				if(MCV3HalfRes.getState()){ config.updateMCV3ResSpeedHack("on"); hasPendingChange = true; }
+				else{ config.updateMCV3ResSpeedHack("off"); hasPendingChange = true; }
+
+				showRestartDialog();
+			}
+		});
+
+		MCV3NoLighting.addItemListener(new ItemListener() 
+		{
+			public void itemStateChanged(ItemEvent e) 
+			{
+				if(MCV3NoLighting.getState()){ config.updateMCV3NoLightingSpeedHack("on"); hasPendingChange = true; }
+				else{ config.updateMCV3NoLightingSpeedHack("off"); hasPendingChange = true; }
+
+				showRestartDialog();
+			}
+		});
+
 		// Compatibility settings
 		fantasyZoneFix.addItemListener(new ItemListener()
 		{
@@ -779,6 +813,15 @@ public final class AWTGUI
 			{
 				if(ignoreVolumeChanges.getState()){ config.updateCompatIgnoreVolumeChanges("on"); hasPendingChange = true; }
 				else{ config.updateCompatIgnoreVolumeChanges("off"); hasPendingChange = true; }
+			}
+		});
+
+		MCV3HorFovFix.addItemListener(new ItemListener()
+		{
+			public void itemStateChanged(ItemEvent e)
+			{
+				if(MCV3HorFovFix.getState()){ config.updateCompatMCV3HorizFovFix("on"); hasPendingChange = true; }
+				else{ config.updateCompatMCV3HorizFovFix("off"); hasPendingChange = true; }
 			}
 		});
 
@@ -997,6 +1040,24 @@ public final class AWTGUI
 			}
 		});
 
+		MCV3ShowHeapUsage.addItemListener(new ItemListener() 
+		{
+			public void itemStateChanged(ItemEvent e) 
+			{
+				if(MCV3ShowHeapUsage.getState()) { config.MCV3ShowHeapUsage("on"); Mobile.MCV3ShowHeapUsage = true; }
+				else { config.MCV3ShowHeapUsage("off"); Mobile.MCV3ShowHeapUsage = false; }
+			}
+		});
+
+		MCV3ShowTimeMetrics.addItemListener(new ItemListener() 
+		{
+			public void itemStateChanged(ItemEvent e) 
+			{
+				if(MCV3ShowTimeMetrics.getState()) { config.MCV3ShowTimeMetrics("on"); Mobile.MCV3ShowTimeMetrics = true; }
+				else { config.MCV3ShowTimeMetrics("off"); Mobile.MCV3ShowTimeMetrics = false; }
+			}
+		});
+
 		// These are specific to AWTGUI
 		showDebugWindows.addItemListener(new ItemListener() 
 		{
@@ -1056,6 +1117,7 @@ public final class AWTGUI
 		debugMenu.add(showDebugWindows);
 		debugMenu.add(logLevel);
 		debugMenu.add(M3GDebug);
+		debugMenu.add(MCV3Debug);
 		
 		deleteTemporaryKJXFiles.setState(true);
 
@@ -1069,7 +1131,10 @@ public final class AWTGUI
 		M3GDebug.add(M3GUntextured);
 		M3GDebug.add(M3GWireframe);
 
-		for(int i = 0; i < config.supportedResolutions.length; i++) { resChoice.add(config.supportedResolutions[i]); }
+		MCV3Debug.add(MCV3ShowHeapUsage);
+		MCV3Debug.add(MCV3ShowTimeMetrics);
+
+		for(int i = 0; i < supportedResolutions.length; i++) { resChoice.add(supportedResolutions[i]); }
 		for(int i = 0; i < dojaVersions.length; i++) { DoJaVersion.add(dojaVersions[i]); }
 		for(int i = 0; i < rotations.length; i++) { screenRotation.add(rotations[i]); }
 		for(int i = 0; i < layoutOptions.length; i++) { phoneType.add(layoutOptions[i]); }
@@ -1081,6 +1146,8 @@ public final class AWTGUI
 
 		speedHackMenu.add(noAlphaOnBlankImages);
 		speedHackMenu.add(M3GHalfRes);
+		speedHackMenu.add(MCV3HalfRes);
+		speedHackMenu.add(MCV3NoLighting);
 
 		compatSettingsMenu.add(fantasyZoneFix);
 		compatSettingsMenu.add(transToOriginOnReset);
@@ -1088,6 +1155,7 @@ public final class AWTGUI
 		compatSettingsMenu.add(overridePlatChecks);
 		compatSettingsMenu.add(siemensFriendlyDrawing);
 		compatSettingsMenu.add(ignoreVolumeChanges);
+		compatSettingsMenu.add(MCV3HorFovFix);
 
 		// add menus to menubar
 		menuBar.add(fileMenu);
@@ -1126,6 +1194,10 @@ public final class AWTGUI
 
 			M3GHalfRes.setState(config.settings.get("spdhackm3ghalfres").equals("on"));
 
+			MCV3HalfRes.setState(config.settings.get("spdhackmcv3halfres").equals("on"));
+
+			MCV3NoLighting.setState(config.settings.get("spdhackmcv3nolighting").equals("on"));
+
 			fantasyZoneFix.setState(config.settings.get("compatfantasyzonefix").equals("on"));
 
 			transToOriginOnReset.setState(config.settings.get("compattranstooriginonreset").equals("on"));
@@ -1137,6 +1209,8 @@ public final class AWTGUI
 			siemensFriendlyDrawing.setState(config.settings.get("compatsiemensfriendlydrawing").equals("on"));
 
 			ignoreVolumeChanges.setState(config.settings.get("compatignorevolumechanges").equals("on"));
+
+			MCV3HorFovFix.setState(config.settings.get("compatmcv3horizfovfix").equals("on"));
 
 			resChoice.select(""+ Integer.parseInt(config.settings.get("scrwidth")) + "x" + ""+ Integer.parseInt(config.settings.get("scrheight")));
 
@@ -1152,6 +1226,10 @@ public final class AWTGUI
 			M3GWireframe.setState(config.sysSettings.get("M3GWireframe").equals("on"));
 
 			M3GUntextured.setState(config.sysSettings.get("M3GUntextured").equals("on"));
+
+			MCV3ShowHeapUsage.setState(config.sysSettings.get("MCV3ShowHeapUsage").equals("on"));
+
+			MCV3ShowTimeMetrics.setState(config.sysSettings.get("MCV3ShowTimeMetrics").equals("on"));
 
 			deleteTemporaryKJXFiles.setState(config.sysSettings.get("deleteTempKJXFiles").equals("on"));
 

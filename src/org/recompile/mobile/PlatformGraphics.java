@@ -58,7 +58,7 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 	public static final int VCENTER  = 2;
 
 	/* 
-	 * Both DirectGraphics and Sprite's rotations are counter-clockwise, flipping
+	 * DirectGraphics rotations are counter-clockwise compared to MIDP's clockwise, flipping
 	 * an image horizontally is done by multiplying its height or width scale
 	 * by -1 respectively. Flipping vertically is the same as flipping horizontally, 
 	 * and then rotating by 180 degrees.
@@ -188,6 +188,8 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 
 	public BufferedImage getCanvas() { return canvas; }
 
+	public int[] getFrameBuffer() { return canvasData; }
+
 	public void clearRect(int x, int y, int width, int height)
 	{
 		if(contextDisposed) { throw new UIException(UIException.ILLEGAL_STATE, "This graphics context has been disposed"); }
@@ -200,11 +202,11 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 
 	public void copyArea(int x_src, int y_src, int width, int height, int x_dest, int y_dest, int anchor) 
 	{
-		x_dest = AnchorX(x_dest, width, anchor);
-		y_dest = AnchorY(y_dest, height, anchor);
-
 		x_src += getTranslateX();
 		y_src += getTranslateY();
+
+		x_dest = AnchorX(x_dest, width, anchor);
+		y_dest = AnchorY(y_dest, height, anchor);
 
 		// Check if the source area is within bounds before doing any draw operations
 		if (x_src < 0 || y_src < 0 || 
@@ -514,9 +516,8 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 	
 		final int clipX = (getClipX() + translateX < 0) ? 0 : (getClipX() + translateX);
 		final int clipY = (getClipY() + translateY < 0) ? 0 : (getClipY() + translateY);
-		final int clipWidth = (getClipWidth() + clipX > canvasWidth) ? canvasWidth : (getClipWidth() + clipX);
-		final int clipHeight = (getClipHeight() + clipY > canvasHeight) ? canvasHeight : (getClipHeight() + clipY);
-		final int icache = (x > clipX) ? 0 : (clipX - x);
+		final int clipWidth = (getClipWidth() + getClipX() + translateX > canvasWidth) ? canvasWidth : (getClipWidth() + getClipX() + translateX);
+		final int clipHeight = (getClipHeight() + getClipY() + translateY > canvasHeight) ? canvasHeight : (getClipHeight() + getClipY() + translateY);
 
 		if(y + height > clipHeight) { height = clipHeight - y; }
 		if(x + width > clipWidth)   { width = clipWidth - x; }
@@ -524,12 +525,12 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 		/* If width or height ended up as zero, we can exit early */
 		if(width == 0 || height == 0) { return; }
 		
-		// Needed in order to ensure images larger than the canvas don't accidentally overflow and render on the opposite edge of the screen
-		if ((getClipX() + translateX < 0) && width < canvasWidth) { width += (getClipX() + translateX); }
+		final int icache = (x > clipX) ? 0 : (clipX - x);
+		final int jcache = (y > clipY) ? 0 : (clipY - y);
 
 		int rowOffset, destRow, j, i;
 		// The array's x and y positions start from either 0 or the first valid drawable position, as the offset is what dictates where the data should start being read from
-		for (j = (y > clipY) ? 0 : (clipY - y); j < height; j++) // This ternary only runs once, so there's no need to cache
+		for (j = jcache; j < height; j++) // This ternary only runs once, so there's no need to cache
 		{
 			rowOffset = offset + (j * scanlength);
 			destRow = (y + j) * canvasWidth;
@@ -553,8 +554,8 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 
 		final int clipX = (getClipX() + translateX < 0) ? 0 : (getClipX() + translateX);
 		final int clipY = (getClipY() + translateY < 0) ? 0 : (getClipY() + translateY);
-		final int clipWidth = (getClipWidth() + clipX > canvasWidth) ? canvasWidth : (getClipWidth() + clipX);
-		final int clipHeight = (getClipHeight() + clipY > canvasHeight) ? canvasHeight : (getClipHeight() + clipY);
+		final int clipWidth = (getClipWidth() + getClipX() + translateX > canvasWidth) ? canvasWidth : (getClipWidth() + getClipX() + translateX);
+		final int clipHeight = (getClipHeight() + getClipY() + translateY > canvasHeight) ? canvasHeight : (getClipHeight() + getClipY() + translateY);
 
 		int dx = Math.abs(x2 - x1);
     	int dy = Math.abs(y2 - y1);
@@ -609,8 +610,8 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 
 		final int clipX = (getClipX() + translateX < 0) ? 0 : (getClipX() + translateX);
 		final int clipY = (getClipY() + translateY < 0) ? 0 : (getClipY() + translateY);
-		final int clipWidth = (getClipWidth() + clipX > canvasWidth) ? canvasWidth : (getClipWidth() + clipX);
-		final int clipHeight = (getClipHeight() + clipY > canvasHeight) ? canvasHeight : (getClipHeight() + clipY);
+		final int clipWidth = (getClipWidth() + getClipX() + translateX > canvasWidth) ? canvasWidth : (getClipWidth() + getClipX() + translateX);
+		final int clipHeight = (getClipHeight() + getClipY() + translateY > canvasHeight) ? canvasHeight : (getClipHeight() + getClipY() + translateY);
 
 		int curPixel = 0; // Used only for DOTTED style lines
 
@@ -632,8 +633,24 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 		final float endAngleRad = (fastToRadians(startAngle + arcAngle) - fastToRadians(startAngle));
 		int steps = (int) (Math.abs(arcAngle * ((width + height) / 2) / 50.0f));
 		
-		int firstFillX = -1, firstFillY = -1, lastFillX = -1, lastFillY = -1;
-		for (int i = 0; i < steps; i++) 
+		int firstFillX = (int) Math.round((centerX) + radiusX * Math.cos(startAngleRad));
+		int firstFillY = (int) Math.round((centerY) + radiusY * Math.sin(startAngleRad)); 
+		int lastFillX = -1;
+		int lastFillY = -1;
+
+		if((firstFillX >= clipX && firstFillX < clipWidth && firstFillY >= clipY && firstFillY < clipHeight) && 
+			((strokeStyle == DOTTED && curPixel % 4 <= 1) || strokeStyle == SOLID))
+		{
+			if(!Mobile.isDoJa && getAlphaComponent() == 255) { canvasData[(firstFillY * canvasWidth) + firstFillX] = getColor(); }
+			else 
+			{ 
+				canvasData[(firstFillY * canvasWidth) + firstFillX] = blendPixels(getColor(), canvasData[(firstFillY * canvasWidth) + firstFillX]); 
+			}
+			curPixel++;
+		}
+
+		/* First pixel was already drawn, so start from step 1 */
+		for (int i = 1; i < steps; i++) 
 		{
 			float angle = startAngleRad + (i * endAngleRad / steps);
 			
@@ -642,7 +659,6 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 			
 			// Make sure we don't paint the same pixel more than once
 			if((lastFillX == fillX && lastFillY == fillY) || (firstFillX == fillX && firstFillY == fillY)) { continue; }
-			if(i == 0) { firstFillY = fillY; firstFillX = fillX; }
 			lastFillX = fillX;
 			lastFillY = fillY;
 
@@ -671,8 +687,8 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 
 		final int clipX = (getClipX() + translateX < 0) ? 0 : (getClipX() + translateX);
 		final int clipY = (getClipY() + translateY < 0) ? 0 : (getClipY() + translateY);
-		final int clipWidth = (getClipWidth() + clipX > canvasWidth) ? canvasWidth : (getClipWidth() + clipX);
-		final int clipHeight = (getClipHeight() + clipY > canvasHeight) ? canvasHeight : (getClipHeight() + clipY);
+		final int clipWidth = (getClipWidth() + getClipX() + translateX > canvasWidth) ? canvasWidth : (getClipWidth() + getClipX() + translateX);
+		final int clipHeight = (getClipHeight() + getClipY() + translateY > canvasHeight) ? canvasHeight : (getClipHeight() + getClipY() + translateY);
 		
 		for (int j = 0; j < height; j++) 
 		{
@@ -692,7 +708,7 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 				}
 				
 				// We must only draw borders, otherwise this becomes fillRect
-				if(j == 0 || j == height-1) { i++; }
+				if(j == 0 || j == height-1 || width == 1) { i++; }
 				else { i += width-1; }
 			}
 		}
@@ -726,7 +742,38 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 		drawArc(x + width - arcWidth - 1, y + height - arcHeight - 1, arcWidth, arcHeight, 270, 90); // Bottom-right corner
 	}
 
+	// Patch: Line break support (May affect other games)
 	public void drawString(String str, int x, int y, int anchor)
+	{
+		if(str == null || str.length() == 0) { return; }
+		if(str.indexOf('\n') < 0 && str.indexOf('\r') < 0)
+		{
+			drawStringSingleLine(str, x, y, anchor);
+			return;
+		}
+
+		int lineHeight = 0;
+		if(Mobile.isDoJa) { lineHeight = dojaFont.getHeight(); }
+		else { lineHeight = font.getHeight(); }
+
+		int lineStart = 0;
+		int lineIndex = 0;
+		for(int i = 0; i <= str.length(); i++)
+		{
+			boolean end = (i == str.length());
+			char ch = end ? 0 : str.charAt(i);
+			if(end || ch == '\n' || ch == '\r')
+			{
+				String line = str.substring(lineStart, i);
+				drawStringSingleLine(line, x, y + (lineIndex * lineHeight), anchor);
+				lineIndex++;
+				if(!end && ch == '\r' && i + 1 < str.length() && str.charAt(i + 1) == '\n') { i++; }
+				lineStart = i + 1;
+			}
+		}
+	}
+
+	private void drawStringSingleLine(String str, int x, int y, int anchor)
 	{
 		if(str != null && str.length() > 0)
 		{
@@ -775,26 +822,21 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 		x += translateX;
 		y += translateY;
 
-		final boolean[] filledPixels = new boolean[(width+1) * (height+1)];
+		final boolean hasAlpha = getAlphaComponent() < 255;
+		int filledZ = 0;
+		byte[] filledPixels = null;
 
-		final int clipX = Math.max(0, getClipX() + translateX);
-		final int clipY = Math.max(0, getClipY() + translateY);
-		final int clipWidth = Math.min(canvasWidth, getClipWidth() + clipX);
-		final int clipHeight = Math.min(canvasHeight, getClipHeight() + clipY);
+		/** 
+		 * Only allocate the alpha buffer if the color isn't opaque. Noticeably
+		 * improves performance for opaque arcs. 8 pixels of information are packed
+		 * in a single boolean/byte, noticeably reducing memory usage.
+		 */
+		if(hasAlpha) { filledPixels = new byte[width * height / 8 + 1]; }
 
-		/* 
-			* This is just drawArc's Bresenham midpoint circle algorithm modified to draw arcs
-			* from the center to the edge and check if a pixel was already painted before. Works great but
-			* is VERY slow on large arcs. Trying to use a scanline approach could result in much better
-			* performance due to the simpler checks (just go from yMax to yMin while making sure a y position
-			* is never used twice) but doesn't seem to work right in some edge cases (negative angles, too
-			* wide/narrow arc angles, etc) so this one, albeit slow, is what we'll be going with at the moment.
-			* 
-			* At least it has the upside of generating far more stable arcs that fully match their outline
-			* compared to Java SE's standard algorithm.
-			* 
-			* TODO: Optimize this later
-		*/ 
+		final int clipX = (getClipX() + translateX < 0) ? 0 : (getClipX() + translateX);
+		final int clipY = (getClipY() + translateY < 0) ? 0 : (getClipY() + translateY);
+		final int clipWidth = (getClipWidth() + getClipX() + translateX > canvasWidth) ? canvasWidth : (getClipWidth() + getClipX() + translateX);
+		final int clipHeight = (getClipHeight() + getClipY() + translateY > canvasHeight) ? canvasHeight : (getClipHeight() + getClipY() + translateY);
 
 		final float centerX = x + width / 2.0f;
 		final float centerY = y + height / 2.0f;
@@ -814,14 +856,15 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 			{
 				int innerX = (int) Math.round(centerX + radiusX * Math.cos(angle) * (j / maxRadius));
 				int innerY = (int) Math.round(centerY + radiusY * Math.sin(angle) * (j / maxRadius));
+				filledZ = ((innerY-y) * width + innerX-x);
 
 				if (innerX >= clipX && innerX < clipWidth && innerY >= clipY && innerY < clipHeight && 
-					innerX-x >= 0 && innerY-y >=0 && !filledPixels[(innerY-y) * width + innerX-x]) 
+					innerX-x >= 0 && innerY-y >=0 && (hasAlpha ? (filledPixels[filledZ >> 3] & (1 << (7 - filledZ & 7))) == 0 : true)) 
 				{
-					filledPixels[(innerY-y) * width + innerX-x] = true;
-					if (getAlphaComponent() == 255) { canvasData[(innerY * canvasWidth) + innerX] = getColor(); } 
+					if (!hasAlpha) { canvasData[(innerY * canvasWidth) + innerX] = getColor(); } 
 					else 
 					{
+						filledPixels[filledZ >> 3] |= (1 << (7 - filledZ & 7));
 						canvasData[(innerY * canvasWidth) + innerX] = blendPixels(getColor(), canvasData[(innerY * canvasWidth) + innerX]);
 					}
 				}
@@ -840,34 +883,26 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 
 		final int clipX = (getClipX() + translateX < 0) ? 0 : (getClipX() + translateX);
 		final int clipY = (getClipY() + translateY < 0) ? 0 : (getClipY() + translateY);
-		final int clipWidth = (getClipWidth() + clipX > canvasWidth) ? canvasWidth : (getClipWidth() + clipX);
-		final int clipHeight = (getClipHeight() + clipY > canvasHeight) ? canvasHeight : (getClipHeight() + clipY);
-		final int icache = (x > clipX) ? 0 : (clipX - x);
+		final int clipWidth = (getClipWidth() + getClipX() + translateX > canvasWidth) ? canvasWidth : (getClipWidth() + getClipX() + translateX);
+		final int clipHeight = (getClipHeight() + getClipY() + translateY > canvasHeight) ? canvasHeight : (getClipHeight() + getClipY() + translateY);
 
 		if(y + height > clipHeight) { height = clipHeight - y; }
 		if(x + width > clipWidth)   { width = clipWidth - x; }
+
+		/* If width or height ended up as zero, we can exit early */
+		if(width == 0 || height == 0) { return; }
 		
-		if(!Mobile.isDoJa && getAlphaComponent() == 255) 
+		final int icache = (x > clipX) ? 0 : (clipX - x);
+		final int jcache = (y > clipY) ? 0 : (clipY - y);
+		
+		for (int j = jcache; j < height; j++) 
 		{
-			for (int j = (y > clipY) ? 0 : (clipY - y); j < height; j++) 
+			for (int i = icache; i < width; i++) 
 			{
-				for (int i = icache; i < width; i++) 
-				{
-					canvasData[((y+j) * canvasWidth) + x+i] = getColor();
-				}
+				if(!Mobile.isDoJa && getAlphaComponent() == 255) { canvasData[((y+j) * canvasWidth) + x+i] = getColor(); }
+				else { canvasData[((y+j) * canvasWidth) + x+i] = blendPixels(getColor(), canvasData[((y+j) * canvasWidth) + x+i]); }
 			}
 		}
-		else 
-		{
-			for (int j = (y > clipY) ? 0 : (clipY - y); j < height; j++) 
-			{
-				for (int i = icache; i < width; i++) 
-				{
-					canvasData[((y+j) * canvasWidth) + x+i] = blendPixels(getColor(), canvasData[((y+j) * canvasWidth) + x+i]);
-				}
-			}
-		}
-		
 	}
 
 	public void fillRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) 
@@ -890,9 +925,9 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 		if(arcHeight >= height) { arcHeight = height-1; }
 		
 		// Fill the main rectangle area
-		fillRect(x + (arcWidth/2)+1, y, width - 2 * (arcWidth/2) - 2, height); // Middle part
-		fillRect(x, y + (arcHeight/2)+1, (arcWidth/2)+1, height - 2 * (arcHeight/2) - 2); // Left Side part
-		fillRect(x + (width - (arcWidth/2))-1, y + (arcHeight/2)+1, (arcWidth/2)+1, height - 2 * (arcHeight/2) - 2); // Right Side part
+		fillRect(x + (arcWidth/2)+1, y, width - arcWidth - 2, height); // Middle part
+		fillRect(x, y + (arcHeight/2)+1, (arcWidth/2)+1, height - arcHeight - 2); // Left Side part
+		fillRect(x + (width - (arcWidth/2))-1, y + (arcHeight/2)+1, (arcWidth/2)+1, height - arcHeight - 2); // Right Side part
 
 		// Fill rounded corners
 		fillArc(x, y, arcWidth, arcHeight, 90, 90); // Top-left corner
@@ -1057,60 +1092,223 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 		if (pixels == null) { throw new NullPointerException("drawPixels(byte) received a null pixel array"); }
 		if (offset < 0 || offset >= (pixels.length * 8)) { throw new ArrayIndexOutOfBoundsException("drawPixels(byte) index out of bounds:" + width + " * " + height + "| pixels len:" + (pixels.length * 8) + "| offset:" + offset); }
 
-		int[] Type1 = {0xFFFFFFFF, 0xFF000000, 0x00FFFFFF, 0x00000000};
+		if(width == 0 || height == 0) { return; }
+
 		int c = 0;
+		int a = 0xFF;
 		BufferedImage temp = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);// Nokia DirectGraphics states that image width and height CAN be zero.
 		int[] data = ((DataBufferInt) temp.getRaster().getDataBuffer()).getData();
+		int bit;
 
 		switch (format) 
 		{
-			case DirectGraphics.TYPE_BYTE_1_GRAY_VERTICAL: // TYPE_BYTE_1_GRAY_VERTICAL - Used by Munkiki's Castles
-				int ods = offset / scanlength;
-				int oms = offset % scanlength;
-				int b = ods % 8; // Bit offset in a byte, since GRAY_VERTICAL is packing 8 vertical pixel bits in a byte.
+			// NOTE on gray scales: The higher the __pixels value on a given
+			// position, the darker the pixel. This is so that the output
+			// matches actual nokia devices like a 3310, 3410, etc. Which is
+			// why (n - c) is used in color scaling. Alpha is scaled normally.
+			case DirectGraphics.TYPE_BYTE_1_GRAY_VERTICAL:
+				// Bit offset, GRAY_VERTICAL packs 8 vertical pixels in a byte.
+				bit = (offset / scanlength) % 8;
 				for (int yj = 0; yj < height; yj++) 
 				{
 					int ypos = yj * width;
-					int tmp = (ods + yj) / 8 * scanlength + oms;
+					int tmp = ((offset / scanlength) + yj) / 8 * 
+						scanlength + (offset % scanlength);
 					for (int xj = 0; xj < width; xj++) 
 					{
-						if(tmp + xj >= pixels.length) { continue; } // Ignore if accessing out of bounds
-						c = ((pixels[tmp + xj] >> b) & 1);
+						// Ignore if accessing out of bounds
+						if(tmp + xj >= pixels.length)
+							continue;
+
+						c = ((pixels[tmp + xj] >> bit) & 1);
+
 						if (transparencyMask != null) 
 						{
-							c |= (((transparencyMask[tmp + xj] >> b) & 1) ^ 1) << 1; // Apply transparency mask
+							a = ((transparencyMask[tmp + xj] >> bit) & 1) << 1;
+						
+							a *= 255;
 						}
-						data[ypos + xj] = Type1[c]; // Set pixel directly in the DataBuffer also removing the need for setDataElements
+
+						c = (1 - c) * 255;
+						
+						data[ypos + xj] = (a << 24) | (c << 16) | (c << 8) | c;
 					}
-					b++;
-					if (b > 7) b = 0;
+					bit++;
+					if (bit > 7) 
+						bit = 0;
 				}
 				break;
 	
-			case DirectGraphics.TYPE_BYTE_1_GRAY: // TYPE_BYTE_1_GRAY - Also used by Munkiki's Castles
-				b = 7 - offset % 8;
+			case DirectGraphics.TYPE_BYTE_1_GRAY: 
+				bit = 7 - offset % 8;
 				for (int yj = 0; yj < height; yj++) 
 				{
 					int line = offset + yj * scanlength;
 					int ypos = yj * width;
 					for (int xj = 0; xj < width; xj++) 
 					{
-						if((line + xj) / 8 >= pixels.length) { continue; } // Ignore if accessing out of bounds
-						c = ((pixels[(line + xj) / 8] >> b) & 1);
+						if((line + xj) / 8 >= pixels.length)
+							continue;
+						
+						c = ((pixels[(line + xj) / 8] >> bit) & 1);
+
 						if (transparencyMask != null) 
 						{
-							c |= (((transparencyMask[(line + xj) / 8] >> b) & 1) ^ 1) << 1; // Apply transparency mask
+							a = ((transparencyMask[(line + xj) / 8] >> bit) 
+								& 1) << 1;
+
+							a *= 255;
 						}
-						data[ypos + xj] = Type1[c];
-						b--;
-						if (b < 0) b = 7;
+
+						c = (1 - c) * 255;
+
+						data[ypos + xj] = (a << 24) | (c << 16) | (c << 8) | c;
+
+						bit--;
+						if (bit < 0) 
+							bit = 7;
 					}
-					b = b - (scanlength - width) % 8;
-					if (b < 0) b = 8 + b;
+					bit -= (scanlength - width) % 8;
+					if (bit < 0) 
+						bit = 8 + bit;
 				}
 				break;
 
-			default: Mobile.log(Mobile.LOG_WARNING, PlatformGraphics.class.getPackage().getName() + "." + PlatformGraphics.class.getSimpleName() + ": " + "drawPixels A : Format " + format + " Not Implemented");
+			/**
+			 * Note that the following types were not found in use on any J2ME
+			 * apps yet:
+			 * 
+			 * TYPE_BYTE_2_GRAY
+			 * TYPE_BYTE_332_RGB
+			 * TYPE_BYTE_4_GRAY
+			 * TYPE_BYTE_8_GRAY
+			 * 
+			 * On the upside, their packing mode is simpler, being from left
+			 * to right and BYTE_2 has 4 pixels in a byte, BYTE_4 has 2 pixels
+			 * in a byte, and BYTE_8 + BYTE_332 are one pixel per byte, so no
+			 * need for per-bit manipulations.
+			 */
+			case DirectGraphics.TYPE_BYTE_2_GRAY:
+				for (int yj = 0; yj < height; yj++) 
+				{
+					int line = offset + yj * scanlength;
+					int ypos = yj * width;
+
+					for (int xj = 0; xj < width; xj++) 
+					{
+						if ((line + xj / 4) >= pixels.length) 
+							continue;
+
+						c = (pixels[line + xj / 4] >> (6 - (2 * (xj % 4))) 
+							& 0x03);
+						if (transparencyMask != null) 
+						{
+							a = (transparencyMask[line + xj / 4] >> (6 - 
+								(2 * (xj % 4))) & 0x03);
+							
+							a *= 85;
+						}
+
+						c = (3 - c) * 85;
+
+						data[ypos + xj] = (a << 24) | (c << 16) | (c << 8) | c; 
+					}
+				}
+				break;
+
+			case DirectGraphics.TYPE_BYTE_332_RGB: 
+				for (int yj = 0; yj < height; yj++) 
+				{
+					int line = offset + yj * scanlength;
+					int ypos = yj * width;
+
+					for (int xj = 0; xj < width; xj++) 
+					{
+						if ((line + xj) >= pixels.length) 
+							continue;
+
+						/* We have 3 bytes for red and green, 2 for blue */
+						c = pixels[line + xj] & 0xFF;
+						int r = (c >> 5) & 0x07;
+						int g = (c >> 2) & 0x07;
+						int b = (c & 0x03);
+
+						/* 
+						 * Thus we have to expand them to 8 bits for 888_RGB.
+						 * This one is a bit more complex than the one for
+						 * BYTE_4 and BYTE_8 types, due to 3 bits not mapping
+						 * perfectly to the 0x00-0xFF range with a single mul
+						 * operation.
+						 */
+						r = (r * 255) / 7;
+						g = (g * 255) / 7;
+						b *= 85;
+
+						/* 
+						 * If a transparencyMask is available, it will have
+						 * a full 8 bits of alpha information on each position,
+						 * since the transparencyMask's alpha data has to be as 
+						 * wide as the color/gray data for a given pixel on all 
+						 * byte types.
+						 */
+						if (transparencyMask != null) 
+							a = transparencyMask[line + xj] & 0xFF;
+
+						data[ypos + xj] = (a << 24) | (r << 16) | (g << 8) | b;
+					}
+				}
+				break;
+
+			case DirectGraphics.TYPE_BYTE_4_GRAY: 
+				for (int yj = 0; yj < height; yj++) 
+				{
+					int line = offset + yj * scanlength;
+					int ypos = yj * width;
+
+					for (int xj = 0; xj < width; xj++) 
+					{
+						if ((line + xj / 2) >= pixels.length) 
+							continue;
+
+						c = (pixels[line + xj / 2] >> (4 * (1 - (xj % 2))) 
+							& 0x0F);
+						if (transparencyMask != null)
+						{
+							a = (transparencyMask[line + xj / 2] >> (4 * (1 - 
+								(xj % 2))) & 0x0F);
+
+							a *= 17;
+						}
+						
+						c = (15 - c) * 17;
+						
+						data[ypos + xj] = (a << 24) | (c << 16) | (c << 8) | c;
+					}
+				}
+				break;
+
+			case DirectGraphics.TYPE_BYTE_8_GRAY: 
+				for (int yj = 0; yj < height; yj++) 
+				{
+					int line = offset + yj * scanlength;
+					int ypos = yj * width;
+
+					for (int xj = 0; xj < width; xj++) 
+					{
+						if ((line + xj) >= pixels.length) 
+							continue;
+
+						c = 255 - (pixels[line + xj] & 0xFF);
+						
+						if(transparencyMask != null)
+							a = transparencyMask[line + xj] & 0xFF;
+
+						data[ypos + xj] = (a << 24) | (c << 16) | (c << 8) | c;
+					}
+				}
+				break;
+			default:
+				throw new IllegalArgumentException("Unsupported format: " + format);
 		}
 
 		temp = manipulateImage(temp, manipulation);
@@ -1124,6 +1322,8 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 		if (width < 0 || height < 0) { throw new IllegalArgumentException("drawPixels(int) received negative width or height"); }
 		if (pixels == null) { throw new NullPointerException("drawPixels(int) received a null pixel array"); }
 		if (offset < 0 || offset >= pixels.length) { throw new ArrayIndexOutOfBoundsException("drawPixels(int) index out of bounds:" + width + " * " + height + "| len:" + pixels.length); }
+
+		if(width == 0 || height == 0) { return; }
 
 		// Create the temporary BufferedImage and get its DataBuffer to manipulate it directly.
 		BufferedImage temp = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -1152,6 +1352,8 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 		if (pixels == null) { throw new NullPointerException("drawPixels(short) received a null pixel array"); }
 		if (offset < 0 || offset >= pixels.length) { throw new ArrayIndexOutOfBoundsException("drawPixels(short) index out of bounds:" + width + " * " + height + "| len:" + pixels.length); }
 
+		if(width == 0 || height == 0) { return; }
+		
 		BufferedImage temp = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     	int[] data = ((DataBufferInt) temp.getRaster().getDataBuffer()).getData();
 		
@@ -1212,8 +1414,8 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 
 		final int clipX = (getClipX() + translateX < 0) ? 0 : (getClipX() + translateX);
 		final int clipY = (getClipY() + translateY < 0) ? 0 : (getClipY() + translateY);
-		final int clipWidth = (getClipWidth() + clipX > canvasWidth) ? canvasWidth : (getClipWidth() + clipX);
-		final int clipHeight = (getClipHeight() + clipY > canvasHeight) ? canvasHeight : (getClipHeight() + clipY);
+		final int clipWidth = (getClipWidth() + getClipX() + translateX > canvasWidth) ? canvasWidth : (getClipWidth() + getClipX() + translateX);
+		final int clipHeight = (getClipHeight() + getClipY() + translateY > canvasHeight) ? canvasHeight : (getClipHeight() + getClipY() + translateY);
 
 		/* 
 		 * Filling polygons is done through the canonical Scan Line fill algorithm. It works
@@ -1246,9 +1448,9 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 					int dy = yPoints[j + yOffset] - yPoints[i + yOffset];
 					if (dy != 0) 
 					{
-						long x = (long) xPoints[i + xOffset] * dy + (y - yPoints[i + yOffset]) * (long) (xPoints[j + xOffset] - xPoints[i + xOffset]);
+						int x = xPoints[i + xOffset] * dy + (y - yPoints[i + yOffset]) * (xPoints[j + xOffset] - xPoints[i + xOffset]);
 						x /= dy;
-						intersections[intersectionCount++] = (int) x;
+						intersections[intersectionCount++] = x;
 					}
 				}
 			}
@@ -1300,12 +1502,24 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 	public void getPixels(byte[] pixels, byte[] transparencyMask, int offset, int scanlength, int x, int y, int width, int height, int format)
 	{
 		if (pixels == null) { throw new NullPointerException("Byte array cannot be null");}
-		if (x < 0 || y < 0 || x + width > canvasWidth || y + height > canvasHeight) 
-		{
-			throw new IllegalArgumentException("Requested copy area exceeds bounds of the image");
+		
+		x += getTranslateX();
+		y += getTranslateY();
+
+		if (x < 0|| y < 0 || height < 0 || width < 0)
+		{ 
+			throw new IllegalArgumentException("Invalid width,height,x or y"); 
 		}
+		
+		if (x < 0 || y < 0 || width * height > pixels.length)  
+		{
+			throw new ArrayIndexOutOfBoundsException("Requested copy area exceeds bounds of the image");
+		}
+
+		// Copy only the area that's on screen.
+		if(x+width >= canvasWidth) { width = canvasWidth-x; }
+		if(y+height >= canvasHeight) { height = canvasHeight-y; }
 	
-		// Just like DrawPixels(byte), we only handle BYTE_1_GRAY_VERTICAL and BYTE_1_GRAY yet
 		switch (format) 
 		{
 			case DirectGraphics.TYPE_BYTE_1_GRAY_VERTICAL:
@@ -1327,7 +1541,7 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 				}
 				break;
 
-			case DirectGraphics.TYPE_BYTE_1_GRAY: // Pretty similar to the one above
+			case DirectGraphics.TYPE_BYTE_1_GRAY:
 				for (int row = 0; row < height; row++) 
 				{
 					for (int col = 0; col < width; col++) 
@@ -1343,17 +1557,126 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 				}
 				break;
 
-			default: Mobile.log(Mobile.LOG_WARNING, PlatformGraphics.class.getPackage().getName() + "." + PlatformGraphics.class.getSimpleName() + ": " + "getPixels A : Format " + format + " Not Implemented");
+			case DirectGraphics.TYPE_BYTE_2_GRAY:
+				for (int row = 0; row < height; row++) 
+				{
+					for (int col = 0; col < width; col++) 
+					{
+						int pixelIndex = (y + row) * canvasWidth + (x + col);
+						int pixelValue = canvasData[pixelIndex];
+
+						int byteIndex = (offset + row) * scanlength + (col / 4);
+						int pixelPos = col % 4;
+
+						int grayValue = (pixelValue & 0xFF);
+						int c = grayValue / 85;
+
+						pixels[byteIndex] |= c << (6 - (2 * pixelPos));
+						if (transparencyMask != null) 
+						{
+							int alphaValue = (pixelValue >> 24) & 0xFF;
+							int a = alphaValue / 85;
+							transparencyMask[byteIndex] |= a << (6 - (2 * pixelPos));
+						}
+					}
+				}
+				break;
+
+			case DirectGraphics.TYPE_BYTE_332_RGB:
+				for (int row = 0; row < height; row++) 
+				{
+					for (int col = 0; col < width; col++) 
+					{
+						int pixelIndex = (y + row) * canvasWidth + (x + col);
+						int pixelValue = canvasData[pixelIndex];
+
+						int byteIndex = (offset + row) * scanlength + col;
+						int r = (pixelValue >> 16) & 0xFF;
+						int g = (pixelValue >> 8) & 0xFF;
+						int b = pixelValue & 0xFF;
+
+						int rgb = ((r * 7 / 255) << 5) | ((g * 7 / 255) << 2) | (b * 3 / 255);
+						
+						pixels[byteIndex] = (byte) rgb;
+						if (transparencyMask != null) 
+						{
+							int alphaValue = (pixelValue >> 24) & 0xFF;
+							transparencyMask[byteIndex] = (byte) alphaValue;
+						}
+					}
+				}
+				break;
+
+			case DirectGraphics.TYPE_BYTE_4_GRAY:
+				for (int row = 0; row < height; row++) 
+				{
+					for (int col = 0; col < width; col++) 
+					{
+						int pixelIndex = (y + row) * canvasWidth + (x + col);
+						int pixelValue = canvasData[pixelIndex];
+
+						int byteIndex = (offset + row) * scanlength + (col / 2);
+						int pixelPos = col % 2;
+
+						int grayValue = (pixelValue & 0xFF);
+						int c = grayValue / 17;
+
+						pixels[byteIndex] |= c << (4 * (1 - pixelPos));
+						if (transparencyMask != null) 
+						{
+							int alphaValue = (pixelValue >> 24) & 0xFF;
+							int a = alphaValue / 17;
+							transparencyMask[byteIndex] |= a << (4 * (1 - pixelPos));
+						}
+					}
+				}
+				break;
+			
+			case DirectGraphics.TYPE_BYTE_8_GRAY:
+				for (int row = 0; row < height; row++) 
+				{
+					for (int col = 0; col < width; col++) 
+					{
+						int pixelIndex = (y + row) * canvasWidth + (x + col);
+						int pixelValue = canvasData[pixelIndex];
+
+						int byteIndex = (offset + row) * scanlength + col;
+						int grayValue = (pixelValue & 0xFF);
+						pixels[byteIndex] = (byte) grayValue;
+
+						if (transparencyMask != null) 
+						{
+							int alphaValue = (pixelValue >> 24) & 0xFF;
+							transparencyMask[byteIndex] = (byte) alphaValue;
+						}
+					}
+				}
+				break;
+			default:
+				throw new IllegalArgumentException("Unsupported format: " + format);
 		}
 	}
 
 	public void getPixels(int[] pixels, int offset, int scanlength, int x, int y, int width, int height, int format)
 	{
 		if (pixels == null) { throw new NullPointerException("int array cannot be null"); }
-		if (x < 0 || y < 0 || x + width > canvasWidth || y + height > canvasHeight) 
-		{
-			throw new IllegalArgumentException("Requested copy area exceeds bounds of the image");
+		
+		x += getTranslateX();
+		y += getTranslateY();
+
+		if (x < 0|| y < 0 || height < 0 || width < 0)
+		{ 
+			throw new IllegalArgumentException("Invalid width,height,x or y"); 
 		}
+		
+		if (x < 0 || y < 0 || width * height > pixels.length)  
+		{
+			throw new ArrayIndexOutOfBoundsException("Requested copy area exceeds bounds of the image");
+		}
+
+		// Copy only the area that's on screen.
+		if(x+width >= canvasWidth) { width = canvasWidth-x; }
+		if(y+height >= canvasHeight) { height = canvasHeight-y; }
 
 		for (int row = 0; row < height; row++) 
 		{
@@ -1370,10 +1693,23 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 	public void getPixels(short[] pixels, int offset, int scanlength, int x, int y, int width, int height, int format)
 	{
 		if (pixels == null) { throw new NullPointerException("short array cannot be null"); }
-		if (x < 0 || y < 0 || x + width > canvasWidth || y + height > canvasHeight) 
-		{
-			throw new IllegalArgumentException("Requested copy area exceeds bounds of the image");
+		
+		x += getTranslateX();
+		y += getTranslateY();
+
+		if (x < 0|| y < 0 || height < 0 || width < 0)
+		{ 
+			throw new IllegalArgumentException("Invalid width,height,x or y"); 
 		}
+		
+		if (x < 0 || y < 0 || width * height > pixels.length)  
+		{
+			throw new ArrayIndexOutOfBoundsException("Requested copy area exceeds bounds of the image");
+		}
+
+		// Copy only the area that's on screen.
+		if(x+width >= canvasWidth) { width = canvasWidth-x; }
+		if(y+height >= canvasHeight) { height = canvasHeight-y; }
 		
 		for(int row=0; row<height; row++)
 		{
@@ -1803,6 +2139,15 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 
 	private int[] adjustCoordinates(int imageWidth, int imageHeight, int sx, int sy, int width, int height, int transform) 
 	{
+		/* These swap width and height */
+		if(transform == FLIP_ROTATE_LEFT || transform == FLIP_ROTATE_RIGHT ||
+			transform == FLIP_ROTATE_RIGHT_HORIZONTAL || transform == FLIP_ROTATE_RIGHT_VERTICAL)
+		{
+			int tempHeight = height;
+			height = width;
+			width = height;
+		}
+
 		switch (transform) 
 		{
 			case FLIP_HORIZONTAL:
@@ -1813,43 +2158,35 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 				sy = imageHeight - sy - height; 
 				break;
 
-			case FLIP_ROTATE_RIGHT:
+			case FLIP_ROTATE_RIGHT: // 90 degree rotation to the right (clockwise 90)
 				int tempX = sx;
-				sx = imageHeight - sy - height; 
+				sx = imageHeight - sy - width; 
 				sy = tempX;
-				int tempHeight = height;
-				height = width; 
-				width = tempHeight;
 				break;
 
-			case FLIP_ROTATE_LEFT:
+			case FLIP_ROTATE_LEFT: // 90 degree rotation to the left (clockwise 270)
 				int tempY = sy;
-				sy = imageWidth - sx - width; 
+				sy = imageWidth - sx - height; 
 				sx = tempY;
-				tempHeight = height;
-				height = width; 
-				width = tempHeight;
 				break;
 
-			case FLIP_ROTATE:
+			case FLIP_ROTATE: // 180 degree rotation
 				sx = imageWidth - sx - width; 
 				sy = imageHeight - sy - height;
 				break;
 
-			// These are untested, probably wrong
-			case FLIP_ROTATE_RIGHT_VERTICAL:
+			case FLIP_ROTATE_RIGHT_VERTICAL: // Same as a mirrored 90 degree clockwise rotation
 				Mobile.log(Mobile.LOG_WARNING, PlatformGraphics.class.getPackage().getName() + "." + PlatformGraphics.class.getSimpleName() + ": " + "DoJa FLIP_ROTATE_RIGHT_VERTICAL untested");
-				sx = imageWidth - sx - width;
-				int temp = sy;
-				sy = sx; 
-				sx = imageHeight - temp - height; 
+				tempY = sy;
+				sy = imageWidth - sx - height;
+				sx = imageHeight - tempY - width;
 				break;
 
-			case FLIP_ROTATE_RIGHT_HORIZONTAL:
+			case FLIP_ROTATE_RIGHT_HORIZONTAL: // Same as a mirrored 270 degree clockwise rotation
 				Mobile.log(Mobile.LOG_WARNING, PlatformGraphics.class.getPackage().getName() + "." + PlatformGraphics.class.getSimpleName() + ": " + "DoJa FLIP_ROTATE_RIGHT_HORIZONTAL untested");
-				sy = imageHeight - sy - height; 
-				temp = sx;
-				sx = imageHeight - temp - width; 
+				tempX = sx;
+				sx = sy;
+				sy = tempX;
 				break;
 		}
 
@@ -1999,6 +2336,9 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 				sy      = adjustedCoordinates[1];
 				swidth  = adjustedCoordinates[2];
 				sheight = adjustedCoordinates[3];
+
+				width  = adjustedCoordinates[2];
+				height = adjustedCoordinates[3];
 			}
 
 			dx+=translateX;
@@ -2006,8 +2346,8 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 
 			final int clipX = (getClipX() + translateX < 0) ? 0 : (getClipX() + translateX);
 			final int clipY = (getClipY() + translateY < 0) ? 0 : (getClipY() + translateY);
-			final int clipWidth = (getClipWidth() + clipX > canvasWidth) ? canvasWidth : (getClipWidth() + clipX);
-			final int clipHeight = (getClipHeight() + clipY > canvasHeight) ? canvasHeight : (getClipHeight() + clipY);
+			final int clipWidth = (getClipWidth() + getClipX() + translateX > canvasWidth) ? canvasWidth : (getClipWidth() + getClipX() + translateX);
+			final int clipHeight = (getClipHeight() + getClipY() + translateY > canvasHeight) ? canvasHeight : (getClipHeight() + getClipY() + translateY);
 
 			BufferedImage newImg = manipulateImage(image.getCanvas(), dojaflipMode);
 			int[] imgData = ((DataBufferInt) newImg.getRaster().getDataBuffer()).getData();
@@ -2255,6 +2595,7 @@ public abstract class PlatformGraphics implements DirectGraphics, com.nttdocomo.
 		fillRoundRect(0, 2, scaledWidth, scaledHeight, 4, 4); // Cut a bit off from the height so that the counter is slimmer. We're not using chars that go below baseline like 'f' or 'q'
 		// Set the font color and draw it
 		setAlphaRGB(0xFFFFAF00); // Text color is orange
+		drawRoundRect(0, 2, scaledWidth, scaledHeight, 4, 4);
 		drawString(fpsText, 0, 0, TOP | LEFT);
 		setOrigin(0, 0);
 		setColor(0, 0, 0);

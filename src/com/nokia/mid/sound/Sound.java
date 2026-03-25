@@ -58,6 +58,8 @@ public class Sound
 
 	private static boolean isPrevPlayerTone = false;
 
+	private int gain = 255;
+
 	private SoundListener listener;
 
 	public Sound(byte[] data, int type) { init(data, type); }
@@ -149,7 +151,7 @@ public class Sound
 	{
 		if(duration <= 0 || convertFreqToNote(freq) > 127 || convertFreqToNote(freq) < 0) { throw new IllegalArgumentException("Cannot init tone with invalid parameters"); }
 		
-		Mobile.log(Mobile.LOG_DEBUG, Sound.class.getPackage().getName() + "." + Sound.class.getSimpleName() + ": " + "Nokia Sound: Single Note:" + freq);
+		Mobile.log(Mobile.LOG_DEBUG, Sound.class.getPackage().getName() + "." + Sound.class.getSimpleName() + ": " + "Nokia Sound: Single Note:" + freq + " for:" + duration);
 
 		try 
 		{ 
@@ -173,7 +175,7 @@ public class Sound
 		}
 		
 		if(((PlatformPlayer)player).nokiaListener != listener) { ((PlatformPlayer) player).setSoundListener(this, listener); }
-
+		((PlatformPlayer.volumeControl)player.getControl("VolumeControl")).setLevel((int) (gain / 255f * 100f));
 		player.setLoopCount(loop);
 		player.setMediaTime(0); // A play call always makes the media play from the beginning.
 		player.start();
@@ -193,30 +195,31 @@ public class Sound
 	public void resume() 
 	{
 		if(player == null || getState() == SOUND_UNINITIALIZED || getState() == SOUND_PLAYING) { return; }
+
+		if(((PlatformPlayer)player).nokiaListener != listener) { ((PlatformPlayer) player).setSoundListener(this, listener); }
+		((PlatformPlayer.volumeControl)player.getControl("VolumeControl")).setLevel((int) (gain / 255f * 100f));
 		player.start(); 
 	}
 
 	public void setGain(int gain) 
 	{ 
 		// Gain goes from 0 to 255, while setLevel works from 0 to 100
-		if(player != null) { ((PlatformPlayer.volumeControl)player.getControl("VolumeControl")).setLevel((int) (gain / 255f * 100f)); }
+		this.gain = gain;
 	}
 
 	public int getGain() 
 	{ 
-		if(player != null) { return (int) ((((PlatformPlayer.volumeControl)player.getControl("VolumeControl")).getLevel() / 100f) * 255f); }
-		return 0;
+		return this.gain;
 	}
 
 	public void setSoundListener(SoundListener soundListener) { this.listener = soundListener; }
 
 	public void stop() 
 	{ 
-		if(player != null) 
-		{ 
-			if(((PlatformPlayer)player).nokiaListener != listener) { ((PlatformPlayer) player).setSoundListener(this, listener); }
-			player.stop(); 
-		} 
+		if(player == null || getState() == Sound.SOUND_STOPPED || getState() == Sound.SOUND_UNINITIALIZED) { return; }
+
+		if(((PlatformPlayer)player).nokiaListener != listener) { ((PlatformPlayer) player).setSoundListener(this, listener); }
+		player.stop(); 
 	}
 
 	// This is the same conversion used in Sprintpcs' DualTone implementation., as it also uses this constant.

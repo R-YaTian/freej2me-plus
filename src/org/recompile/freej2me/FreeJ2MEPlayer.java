@@ -36,6 +36,8 @@ public final class FreeJ2MEPlayer extends Dialog
 {
     private Label dropMessageLabel = new Label(">> 拖放到此 <<", Label.CENTER);
     private Timer playbackTimer;
+    private Label descLabel1 = new Label("Click the button below, or drag a file", Label.CENTER);
+    private Label descLabel2 = new Label("onto this window to load J2ME media.", Label.CENTER);
     private Label fileNameLabel = new Label("加载的媒体文件:");
     private Label fileTypeLabel = new Label("文件类型: 无");
     private Label playbackTicker = new Label("00:00 / 00:00", Label.CENTER);
@@ -62,7 +64,7 @@ public final class FreeJ2MEPlayer extends Dialog
         setForeground(Color.ORANGE);
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        setSize(240, 240);
+        setSize(280, 280);
         setResizable(false);
         
         fileNameField = new TextField();
@@ -89,7 +91,10 @@ public final class FreeJ2MEPlayer extends Dialog
         gbc.gridy = 0;
         gbc.gridwidth = 5; // Span across multiple columns
         add(dropMessageLabel, gbc); // Add the drop message label first
-
+    
+        add(descLabel1, gbc);
+        gbc.gridy++;
+        add(descLabel2, gbc);
         gbc.gridy++;
         add(UIButtons[5], gbc);
         gbc.gridy++;
@@ -225,6 +230,8 @@ public final class FreeJ2MEPlayer extends Dialog
         playbackTicker.setVisible(visible);
         progressBar.setVisible(visible);
         fileNameField.setVisible(visible);
+        descLabel1.setVisible(visible);
+        descLabel2.setVisible(visible);
 
         for(int i = 0; i < UIButtons.length; i++) { UIButtons[i].setVisible(visible); }
     }

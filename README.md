@@ -19,7 +19,7 @@
 <div align="center">
 
 [![Nightly Releases](https://img.shields.io/github/v/release/TASEmulators/freej2me-plus?label=Bleeding%20Edge%20Builds:&style=for-the-badge)](https://github.com/TASEmulators/freej2me-plus/releases/tag/nightlies)
-[![Latest Stable Release](https://img.shields.io/badge/version-v1.51-blue?label=Latest%20Stable%20Release:&style=for-the-badge)](https://github.com/TASEmulators/freej2me-plus/releases/tag/1.51)
+[![Latest Stable Release](https://img.shields.io/badge/version-v1.52-blue?label=Latest%20Stable%20Release:&style=for-the-badge)](https://github.com/TASEmulators/freej2me-plus/releases/tag/1.52)
 
 </div>
 
@@ -156,7 +156,7 @@ Although all arguments aside from the path are optional to launch FreeJ2ME-Plus 
 
 ### _Notes:_
 
-**When running under Microsoft Windows please do note paths require an additional `/` prefixed. For example, `C:\path\to\midlet.jar` should be passed as `file:///C:\path\to\midlet.jar`**
+**When running under Microsoft Windows please do note paths require an additional `/` prefixed. For example, `C:\path\to\midlet.jar` should be passed as `file:////C:\path\to\midlet.jar`**
 
 **FreeJ2ME keeps savedata and config at the working directory it is run from. Currently any settings specified at the config file take precedence over the values passed via command-line.**
 
@@ -171,6 +171,8 @@ Although all arguments aside from the path are optional to launch FreeJ2ME-Plus 
 - #### ObjectWeb's ASM: BSD 3-Clause License, not directly compatible with GPLv3, but can be used as long as the original license is published alongside GPLv3 (check the 'License' tab)
 
 - #### Libretro's API: MIT License, compatible with GPLv3
+
+- #### Roman Lahin [rmn20](https://github.com/rmn20)'s MascotCapsuleV3 renderer (MascotME): MIT License, compatible with GPLv3
 
 ---
 

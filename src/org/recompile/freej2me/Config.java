@@ -46,8 +46,6 @@ public class Config
 	private final String systemPath = "freej2me_system/";
 	private final String systemFile = systemPath + "freej2me.conf";
 
-	public final String[] supportedResolutions = {"96x65","101x64","101x80","128x128","130x130","120x160","128x160","132x176","176x208","176x220","220x176","208x208","180x320","320x180", "240x240", "208x320","240x320","320x240","240x400","400x240","240x432","240x480","360x360","352x416","360x640","640x360","640x480","480x800","800x480"};
-
 	public static int inputKeycodes[] = new int[] 
 	{ 
 		81,  // Q Key
@@ -142,8 +140,11 @@ public class Config
 				settings.put("compatoverrideplatchecks", "on");
 				settings.put("compatsiemensfriendlydrawing", "off");
 				settings.put("compatignorevolumechanges", "off");
+				settings.put("compatmcv3horizfovfix", "off");
 				settings.put("fpshack", "Disabled");
 				settings.put("spdhackm3ghalfres", "off");
+				settings.put("spdhackmcv3halfres", "off");
+				settings.put("spdhackmcv3nolighting", "off");
 				settings.put("dojaversion", "200");
 				saveConfig();
 			}
@@ -156,6 +157,8 @@ public class Config
 				sysSettings.put("logLevel", "2");
 				sysSettings.put("M3GWireframe", "off");
 				sysSettings.put("M3GUntextured", "off");
+				sysSettings.put("MCV3ShowTimeMetrics", "off");
+				sysSettings.put("MCV3ShowHeapUsage", "off");
 				sysSettings.put("deleteTempKJXFiles", "on");
 				sysSettings.put("dumpAudioStreams", "off");
 				sysSettings.put("dumpGraphicsObjects", "off");
@@ -216,8 +219,11 @@ public class Config
 			if(!settings.containsKey("compatoverrideplatchecks")) { settings.put("compatoverrideplatchecks", "on"); }
 			if(!settings.containsKey("compatsiemensfriendlydrawing")) { settings.put("compatsiemensfriendlydrawing", "off"); }
 			if(!settings.containsKey("compatignorevolumechanges")) { settings.put("compatignorevolumechanges", "off"); }
+			if(!settings.containsKey("compatmcv3horizfovfix")) { settings.put("compatmcv3horizfovfix", "off"); }
 			if(!settings.containsKey("fpshack")) { settings.put("fpshack", "Disabled"); }
 			if(!settings.containsKey("spdhackm3ghalfres")) { settings.put("spdhackm3ghalfres", "off"); }
+			if(!settings.containsKey("spdhackmcv3halfres")) { settings.put("spdhackmcv3halfres", "off"); }
+			if(!settings.containsKey("spdhackmcv3nolighting")) { settings.put("spdhackmcv3nolighting", "off"); }
 			if(!settings.containsKey("dojaversion")) { settings.put("dojaversion", "200"); }
 
 			// System settings
@@ -237,6 +243,8 @@ public class Config
 			if(!sysSettings.containsKey("logLevel")) { sysSettings.put("logLevel", "2"); }
 			if(!sysSettings.containsKey("M3GWireframe")) { sysSettings.put("M3GWireframe", "off"); }
 			if(!sysSettings.containsKey("M3GUntextured")) { sysSettings.put("M3GUntextured", "off"); }
+			if(!sysSettings.containsKey("MCV3ShowTimeMetrics")) { sysSettings.put("MCV3ShowTimeMetrics", "off"); }
+			if(!sysSettings.containsKey("MCV3ShowHeapUsage")) { sysSettings.put("MCV3ShowHeapUsage", "off"); }
 			if(!sysSettings.containsKey("deleteTempKJXFiles")) { sysSettings.put("deleteTempKJXFiles", "on"); }
 			if(!sysSettings.containsKey("dumpAudioStreams")) { sysSettings.put("dumpAudioStreams", "off"); }
 			if(!sysSettings.containsKey("dumpGraphicsObjects")) { sysSettings.put("dumpGraphicsObjects", "off"); }
@@ -423,6 +431,22 @@ public class Config
 		onChange.run();
 	}
 
+	public void updateMCV3ResSpeedHack(String value)
+	{
+		Mobile.log(Mobile.LOG_DEBUG, Config.class.getPackage().getName() + "." + Config.class.getSimpleName() + ": " + "Config: spdhackmcv3halfres "+value);
+		settings.put("spdhackmcv3halfres", value);
+		saveConfig();
+		onChange.run();
+	}
+
+	public void updateMCV3NoLightingSpeedHack(String value)
+	{
+		Mobile.log(Mobile.LOG_DEBUG, Config.class.getPackage().getName() + "." + Config.class.getSimpleName() + ": " + "Config: spdhackmcv3nolighting "+value);
+		settings.put("spdhackmcv3nolighting", value);
+		saveConfig();
+		onChange.run();
+	}
+
 	public void updateDoJaVersion(String value)
 	{
 		Mobile.log(Mobile.LOG_DEBUG, Config.class.getPackage().getName() + "." + Config.class.getSimpleName() + ": " + "Config: dojaversion "+value);
@@ -479,6 +503,14 @@ public class Config
 		onChange.run();
 	}
 
+	public void updateCompatMCV3HorizFovFix(String value)
+	{
+		Mobile.log(Mobile.LOG_DEBUG, Config.class.getPackage().getName() + "." + Config.class.getSimpleName() + ": " + "Config: compatmcv3horizfovfix "+value);
+		settings.put("compatmcv3horizfovfix", value);
+		saveConfig();
+		onChange.run();
+	}
+
 	public void updateFPSHack(String value)
 	{
 		Mobile.log(Mobile.LOG_DEBUG, Config.class.getPackage().getName() + "." + Config.class.getSimpleName() + ": " + "Config: fpshack "+value);
@@ -526,6 +558,22 @@ public class Config
 	{
 		Mobile.log(Mobile.LOG_DEBUG, Config.class.getPackage().getName() + "." + Config.class.getSimpleName() + ": " + "SysConfig: M3GUntextured "+value);
 		sysSettings.put("M3GUntextured", value);
+		saveConfig();
+		onChange.run();
+	}
+
+	public void MCV3ShowTimeMetrics(String value) 
+	{
+		Mobile.log(Mobile.LOG_DEBUG, Config.class.getPackage().getName() + "." + Config.class.getSimpleName() + ": " + "SysConfig: MCV3ShowTimeMetrics "+value);
+		sysSettings.put("MCV3ShowTimeMetrics", value);
+		saveConfig();
+		onChange.run();
+	}
+
+	public void MCV3ShowHeapUsage(String value) 
+	{
+		Mobile.log(Mobile.LOG_DEBUG, Config.class.getPackage().getName() + "." + Config.class.getSimpleName() + ": " + "SysConfig: MCV3ShowHeapUsage "+value);
+		sysSettings.put("MCV3ShowHeapUsage", value);
 		saveConfig();
 		onChange.run();
 	}
